@@ -87,8 +87,8 @@
 | --- | --- | --- | --- | --- |
 | TOOL-001 | `glob` | `packages/core/src/tools/glob.ts` | P0 | Not Started |
 | TOOL-002 | `grep_search` | `packages/core/src/tools/grep.ts` | P0 | Not Started |
-| TOOL-003 | `list_directory` | `packages/core/src/tools/ls.ts` | P0 | Not Started |
-| TOOL-004 | `read_file` | `packages/core/src/tools/read-file.ts` | P0 | Not Started |
+| TOOL-003 | `list_directory` | `packages/core/src/tools/ls.ts` | P0 | In Progress |
+| TOOL-004 | `read_file` | `packages/core/src/tools/read-file.ts` | P0 | In Progress |
 | TOOL-005 | `read_many_files` | `packages/core/src/tools/read-many-files.ts` | P0 | Not Started |
 | TOOL-006 | `write_file` | `packages/core/src/tools/write-file.ts` | P0 | Not Started |
 | TOOL-007 | `replace` | `packages/core/src/tools/edit.ts` | P0 | Not Started |

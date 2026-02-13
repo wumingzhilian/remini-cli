@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/remini-bin", "crates/remini-config", "crates/remini-core"]
+members = ["crates/remini-bin", "crates/remini-config", "crates/remini-core", "crates/remini-tools"]
 resolver = "2"
 
 [workspace.package]
