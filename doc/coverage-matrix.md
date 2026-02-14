@@ -85,8 +85,8 @@
 
 | ID | Tool | 基线参考 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- |
-| TOOL-001 | `glob` | `packages/core/src/tools/glob.ts` | P0 | Not Started |
-| TOOL-002 | `grep_search` | `packages/core/src/tools/grep.ts` | P0 | Not Started |
+| TOOL-001 | `glob` | `packages/core/src/tools/glob.ts` | P0 | In Progress |
+| TOOL-002 | `grep_search` | `packages/core/src/tools/grep.ts` | P0 | In Progress |
 | TOOL-003 | `list_directory` | `packages/core/src/tools/ls.ts` | P0 | In Progress |
 | TOOL-004 | `read_file` | `packages/core/src/tools/read-file.ts` | P0 | In Progress |
 | TOOL-005 | `read_many_files` | `packages/core/src/tools/read-many-files.ts` | P0 | Not Started |

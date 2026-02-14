@@ -32,6 +32,13 @@ pub struct DirectoryEntry {
     pub is_directory: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GrepMatch {
+    pub path: PathBuf,
+    pub line_number: usize,
+    pub line: String,
+}
+
 pub fn read_file(path: &Path) -> Result<String, ToolError> {
     if !path.exists() {
         return Err(ToolError {
@@ -81,6 +88,175 @@ pub fn list_directory(path: &Path) -> Result<Vec<DirectoryEntry>, ToolError> {
 
     entries.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(entries)
+}
+
+pub fn grep_search(root: &Path, query: &str) -> Result<Vec<GrepMatch>, ToolError> {
+    if !root.exists() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotFound,
+            message: format!("Path does not exist: {}", root.display()),
+        });
+    }
+
+    if !root.is_dir() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotDirectory,
+            message: format!("Path is not a directory: {}", root.display()),
+        });
+    }
+
+    let mut files = Vec::new();
+    collect_files(root, &mut files)?;
+
+    let mut matches = Vec::new();
+    for file in files {
+        let content = match fs::read_to_string(&file) {
+            Ok(text) => text,
+            Err(_) => continue,
+        };
+
+        for (index, line) in content.lines().enumerate() {
+            if line.contains(query) {
+                matches.push(GrepMatch {
+                    path: file.clone(),
+                    line_number: index + 1,
+                    line: line.to_string(),
+                });
+            }
+        }
+    }
+
+    matches.sort_by(|a, b| {
+        let path_cmp = a.path.cmp(&b.path);
+        if path_cmp == std::cmp::Ordering::Equal {
+            a.line_number.cmp(&b.line_number)
+        } else {
+            path_cmp
+        }
+    });
+
+    Ok(matches)
+}
+
+pub fn glob_search(root: &Path, pattern: &str) -> Result<Vec<PathBuf>, ToolError> {
+    if !root.exists() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotFound,
+            message: format!("Path does not exist: {}", root.display()),
+        });
+    }
+
+    if !root.is_dir() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotDirectory,
+            message: format!("Path is not a directory: {}", root.display()),
+        });
+    }
+
+    let mut files = Vec::new();
+    collect_files(root, &mut files)?;
+
+    let mut matches = Vec::new();
+    for file in files {
+        if let Ok(relative) = file.strip_prefix(root) {
+            let normalized = relative.to_string_lossy().replace('\\', "/");
+            if wildcard_match(pattern, &normalized) {
+                matches.push(file);
+            }
+        }
+    }
+
+    matches.sort();
+    Ok(matches)
+}
+
+fn collect_files(root: &Path, out: &mut Vec<PathBuf>) -> Result<(), ToolError> {
+    for entry in fs::read_dir(root).map_err(|err| map_io_error(err, root))? {
+        let entry = entry.map_err(|err| map_io_error(err, root))?;
+        let path = entry.path();
+        let metadata = entry.metadata().map_err(|err| map_io_error(err, &path))?;
+        if metadata.is_file() {
+            out.push(path);
+        } else if metadata.is_dir() {
+            collect_files(&path, out)?;
+        }
+    }
+    Ok(())
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PatternToken {
+    Literal(char),
+    Star,
+    DoubleStar,
+    Question,
+}
+
+fn tokenize_pattern(pattern: &str) -> Vec<PatternToken> {
+    let chars: Vec<char> = pattern.chars().collect();
+    let mut tokens = Vec::new();
+    let mut i = 0;
+    while i < chars.len() {
+        match chars[i] {
+            '*' => {
+                if i + 1 < chars.len() && chars[i + 1] == '*' {
+                    tokens.push(PatternToken::DoubleStar);
+                    i += 2;
+                } else {
+                    tokens.push(PatternToken::Star);
+                    i += 1;
+                }
+            }
+            '?' => {
+                tokens.push(PatternToken::Question);
+                i += 1;
+            }
+            c => {
+                tokens.push(PatternToken::Literal(c));
+                i += 1;
+            }
+        }
+    }
+    tokens
+}
+
+fn wildcard_match(pattern: &str, text: &str) -> bool {
+    let tokens = tokenize_pattern(pattern);
+    let text_chars: Vec<char> = text.chars().collect();
+    let p_len = tokens.len();
+    let t_len = text_chars.len();
+
+    let mut dp = vec![vec![false; t_len + 1]; p_len + 1];
+    dp[0][0] = true;
+
+    for i in 1..=p_len {
+        if matches!(tokens[i - 1], PatternToken::Star | PatternToken::DoubleStar) {
+            dp[i][0] = dp[i - 1][0];
+        }
+    }
+
+    for i in 1..=p_len {
+        for j in 1..=t_len {
+            match tokens[i - 1] {
+                PatternToken::Star => {
+                    dp[i][j] = dp[i - 1][j] || (text_chars[j - 1] != '/' && dp[i][j - 1]);
+                }
+                PatternToken::DoubleStar => {
+                    dp[i][j] = dp[i - 1][j] || dp[i][j - 1];
+                }
+                PatternToken::Question => {
+                    dp[i][j] = text_chars[j - 1] != '/' && dp[i - 1][j - 1];
+                }
+                PatternToken::Literal(c) => {
+                    if c == text_chars[j - 1] {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    }
+                }
+            }
+        }
+    }
+
+    dp[p_len][t_len]
 }
 
 fn map_io_error(err: io::Error, path: &Path) -> ToolError {
@@ -155,6 +331,51 @@ mod tests {
 
         let result = list_directory(&file_path).expect_err("list_directory should fail");
         assert_eq!(result.kind, ToolErrorKind::NotDirectory);
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn grep_search_finds_matches() {
+        let temp_dir = make_temp_dir("remini-tools-grep-search");
+        let src_dir = temp_dir.join("src");
+        fs::create_dir_all(&src_dir).expect("failed to create src dir");
+        fs::write(src_dir.join("a.txt"), "hello\nneedle line\nbye").expect("failed to write file");
+        fs::write(src_dir.join("b.txt"), "needle once").expect("failed to write file");
+        fs::write(src_dir.join("c.txt"), "nothing here").expect("failed to write file");
+
+        let matches = grep_search(&temp_dir, "needle").expect("grep_search should succeed");
+        assert_eq!(matches.len(), 2);
+        assert_eq!(matches[0].line_number, 2);
+        assert_eq!(matches[1].line_number, 1);
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn glob_search_matches_patterns() {
+        let temp_dir = make_temp_dir("remini-tools-glob-search");
+        let src_dir = temp_dir.join("src");
+        let docs_dir = temp_dir.join("docs");
+        fs::create_dir_all(&src_dir).expect("failed to create src dir");
+        fs::create_dir_all(&docs_dir).expect("failed to create docs dir");
+        fs::write(src_dir.join("main.rs"), "fn main() {}").expect("failed to write file");
+        fs::write(src_dir.join("lib.rs"), "pub fn x() {}").expect("failed to write file");
+        fs::write(docs_dir.join("guide.md"), "# Guide").expect("failed to write file");
+
+        let rs_matches = glob_search(&temp_dir, "src/*.rs").expect("glob_search should succeed");
+        assert_eq!(rs_matches.len(), 2);
+
+        let md_matches = glob_search(&temp_dir, "*.md").expect("glob_search should succeed");
+        assert_eq!(md_matches.len(), 0);
+
+        let nested_md_matches =
+            glob_search(&temp_dir, "docs/*.md").expect("glob_search should succeed");
+        assert_eq!(nested_md_matches.len(), 1);
+
+        let recursive_md_matches =
+            glob_search(&temp_dir, "**/*.md").expect("glob_search should succeed");
+        assert_eq!(recursive_md_matches.len(), 1);
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }
