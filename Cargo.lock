@@ -150,6 +150,9 @@ version = "0.1.0"
 [[package]]
 name = "remini-core"
 version = "0.1.0"
+dependencies = [
+ "remini-tools",
+]
 
 [[package]]
 name = "remini-tools"
