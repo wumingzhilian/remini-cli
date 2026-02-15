@@ -1,3 +1,5 @@
+pub mod tool_registry;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RunMode {
     Interactive,

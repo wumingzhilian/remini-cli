@@ -102,7 +102,7 @@
 | TOOL-015 | `ask_user` | `packages/core/src/tools/ask-user.ts` | P0 | Not Started |
 | TOOL-016 | `enter_plan_mode` | `packages/core/src/tools/enter-plan-mode.ts` | P1 | Not Started |
 | TOOL-017 | `exit_plan_mode` | `packages/core/src/tools/exit-plan-mode.ts` | P1 | Not Started |
-| TOOL-018 | ToolRegistry（内置+发现+MCP） | `packages/core/src/tools/tool-registry.ts` | P0 | Not Started |
+| TOOL-018 | ToolRegistry（内置+发现+MCP） | `packages/core/src/tools/tool-registry.ts` | P0 | In Progress |
 | TOOL-019 | Tool 确认流（allow/deny/ask） | `tools/*` + `policy/*` | P0 | Not Started |
 | TOOL-020 | Tool 输出格式（text/json） | `output/*` | P1 | Not Started |
 
