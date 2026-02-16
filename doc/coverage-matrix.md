@@ -73,7 +73,7 @@
 | CMD-035 | `/theme` | `packages/cli/src/ui/commands/themeCommand.ts` | P2 | Not Started |
 | CMD-036 | `/tools` | `packages/cli/src/ui/commands/toolsCommand.ts` | P1 | Not Started |
 | CMD-037 | `/vim` | `packages/cli/src/ui/commands/vimCommand.ts` | P2 | Not Started |
-| CMD-038 | `@path` 注入 | `docs/reference/commands.md` | P0 | Not Started |
+| CMD-038 | `@path` 注入 | `docs/reference/commands.md` | P0 | In Progress |
 | CMD-039 | `!command` 执行 | `docs/reference/commands.md` | P0 | Not Started |
 | CMD-040 | `!` shell mode 切换 | `docs/reference/commands.md` | P1 | Not Started |
 | CMD-041 | 条件命令 `/agents` | `BuiltinCommandLoader.ts` | P2 | Not Started |
