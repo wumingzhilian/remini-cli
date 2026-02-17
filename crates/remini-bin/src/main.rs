@@ -6,8 +6,8 @@ use clap::{Parser, ValueEnum};
 use remini_config::{resolve_settings, ApprovalMode, CliOverrides, Settings};
 use remini_core::{
     at_command::expand_at_command, bang_command::execute_bang_command, decide_run_mode,
-    normalize_query, startup_notice, tool_registry::ToolRegistry, OutputFormat, RunMode,
-    RunRequest,
+    normalize_query, slash_command::execute_slash_command, startup_notice,
+    tool_registry::ToolRegistry, OutputFormat, RunMode, RunRequest,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -117,6 +117,18 @@ fn main() -> ExitCode {
         }
         RunMode::Headless => {
             if let Some(raw_input) = request.prompt.as_ref().or(request.query.as_ref()) {
+                match execute_slash_command(raw_input) {
+                    Ok(Some(slash_output)) => {
+                        println!("{slash_output}");
+                        return ExitCode::SUCCESS;
+                    }
+                    Ok(None) => {}
+                    Err(err) => {
+                        eprintln!("{err}");
+                        return ExitCode::from(1);
+                    }
+                }
+
                 match execute_bang_command(raw_input) {
                     Ok(Some(shell_output)) => {
                         print!("{shell_output}");

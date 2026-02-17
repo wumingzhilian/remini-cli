@@ -36,7 +36,7 @@
 
 | ID | 能力 | 基线参考 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- |
-| CMD-001 | Slash 命令解析与分发 | `packages/cli/src/services/BuiltinCommandLoader.ts` | P0 | Not Started |
+| CMD-001 | Slash 命令解析与分发 | `packages/cli/src/services/BuiltinCommandLoader.ts` | P0 | In Progress |
 | CMD-002 | `/about` | `packages/cli/src/ui/commands/aboutCommand.ts` | P1 | Not Started |
 | CMD-003 | `/auth` | `packages/cli/src/ui/commands/authCommand.ts` | P1 | Not Started |
 | CMD-004 | `/bug` | `packages/cli/src/ui/commands/bugCommand.ts` | P1 | Not Started |
@@ -49,7 +49,7 @@
 | CMD-011 | `/docs` | `packages/cli/src/ui/commands/docsCommand.ts` | P2 | Not Started |
 | CMD-012 | `/editor` | `packages/cli/src/ui/commands/editorCommand.ts` | P2 | Not Started |
 | CMD-013 | `/extensions` | `packages/cli/src/ui/commands/extensionsCommand.ts` | P0 | Not Started |
-| CMD-014 | `/help` | `packages/cli/src/ui/commands/helpCommand.ts` | P0 | Not Started |
+| CMD-014 | `/help` | `packages/cli/src/ui/commands/helpCommand.ts` | P0 | In Progress |
 | CMD-015 | `/hooks` | `packages/cli/src/ui/commands/hooksCommand.ts` | P1 | Not Started |
 | CMD-016 | `/ide` | `packages/cli/src/ui/commands/ideCommand.ts` | P1 | Not Started |
 | CMD-017 | `/init` | `packages/cli/src/ui/commands/initCommand.ts` | P1 | Not Started |
@@ -71,7 +71,7 @@
 | CMD-033 | `/stats` | `packages/cli/src/ui/commands/statsCommand.ts` | P1 | Not Started |
 | CMD-034 | `/terminal-setup` | `packages/cli/src/ui/commands/terminalSetupCommand.ts` | P2 | Not Started |
 | CMD-035 | `/theme` | `packages/cli/src/ui/commands/themeCommand.ts` | P2 | Not Started |
-| CMD-036 | `/tools` | `packages/cli/src/ui/commands/toolsCommand.ts` | P1 | Not Started |
+| CMD-036 | `/tools` | `packages/cli/src/ui/commands/toolsCommand.ts` | P1 | In Progress |
 | CMD-037 | `/vim` | `packages/cli/src/ui/commands/vimCommand.ts` | P2 | Not Started |
 | CMD-038 | `@path` 注入 | `docs/reference/commands.md` | P0 | In Progress |
 | CMD-039 | `!command` 执行 | `docs/reference/commands.md` | P0 | In Progress |
