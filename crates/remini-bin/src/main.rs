@@ -57,6 +57,39 @@ struct CliArgs {
     output_format: Option<CliOutputFormat>,
 }
 
+fn json_escape(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len() + 8);
+    for c in value.chars() {
+        match c {
+            '"' => escaped.push_str("\\\""),
+            '\\' => escaped.push_str("\\\\"),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            '\t' => escaped.push_str("\\t"),
+            _ => escaped.push(c),
+        }
+    }
+    escaped
+}
+
+fn print_headless_output(output: &str, format: Option<&OutputFormat>) {
+    match format.unwrap_or(&OutputFormat::Text) {
+        OutputFormat::Text => println!("{output}"),
+        OutputFormat::Json => {
+            let escaped = json_escape(output);
+            println!(
+                "{{\"response\":\"{escaped}\",\"stats\":{{\"mode\":\"stub\",\"toolsUsed\":0}}}}"
+            );
+        }
+        OutputFormat::StreamJson => {
+            let escaped = json_escape(output);
+            println!("{{\"type\":\"init\",\"sessionId\":\"local-dev\",\"model\":\"stub\"}}");
+            println!("{{\"type\":\"message\",\"role\":\"assistant\",\"content\":\"{escaped}\"}}");
+            println!("{{\"type\":\"result\",\"response\":\"{escaped}\"}}");
+        }
+    }
+}
+
 fn main() -> ExitCode {
     let args = CliArgs::parse();
 
@@ -117,41 +150,63 @@ fn main() -> ExitCode {
         }
         RunMode::Headless => {
             if let Some(raw_input) = request.prompt.as_ref().or(request.query.as_ref()) {
-                match execute_slash_command(raw_input) {
-                    Ok(Some(slash_output)) => {
-                        println!("{slash_output}");
-                        return ExitCode::SUCCESS;
-                    }
-                    Ok(None) => {}
+                let response_text = match execute_slash_command(raw_input) {
+                    Ok(Some(slash_output)) => slash_output,
+                    Ok(None) => match execute_bang_command(raw_input) {
+                        Ok(Some(shell_output)) => shell_output,
+                        Ok(None) => {
+                            let registry = ToolRegistry;
+                            match expand_at_command(raw_input, Path::new("."), &registry) {
+                                Ok(Some(expanded)) => expanded,
+                                Ok(None) => raw_input.to_string(),
+                                Err(err) => {
+                                    eprintln!("{err}");
+                                    return ExitCode::from(1);
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            eprintln!("{err}");
+                            return ExitCode::from(1);
+                        }
+                    },
                     Err(err) => {
                         eprintln!("{err}");
                         return ExitCode::from(1);
                     }
-                }
+                };
 
-                match execute_bang_command(raw_input) {
-                    Ok(Some(shell_output)) => {
-                        print!("{shell_output}");
-                        return ExitCode::SUCCESS;
-                    }
-                    Ok(None) => {}
-                    Err(err) => {
-                        eprintln!("{err}");
-                        return ExitCode::from(1);
-                    }
-                }
-
-                let registry = ToolRegistry;
-                match expand_at_command(raw_input, Path::new("."), &registry) {
-                    Ok(Some(expanded)) => println!("{expanded}"),
-                    Ok(None) => println!("{raw_input}"),
-                    Err(err) => {
-                        eprintln!("{err}");
-                        return ExitCode::from(1);
-                    }
-                }
+                print_headless_output(&response_text, request.output_format.as_ref());
             }
             ExitCode::SUCCESS
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn json_escape_escapes_newlines_and_quotes() {
+        let value = "line1\n\"quoted\"";
+        let escaped = json_escape(value);
+        assert_eq!(escaped, "line1\\n\\\"quoted\\\"");
+    }
+
+    #[test]
+    fn output_format_mapping_works() {
+        assert_eq!(
+            OutputFormat::from(CliOutputFormat::Text),
+            OutputFormat::Text
+        );
+        assert_eq!(
+            OutputFormat::from(CliOutputFormat::Json),
+            OutputFormat::Json
+        );
+        assert_eq!(
+            OutputFormat::from(CliOutputFormat::StreamJson),
+            OutputFormat::StreamJson
+        );
     }
 }
