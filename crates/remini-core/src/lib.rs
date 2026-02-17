@@ -1,4 +1,5 @@
 pub mod at_command;
+pub mod bang_command;
 pub mod tool_registry;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
