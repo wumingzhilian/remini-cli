@@ -4,18 +4,31 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         return Ok(None);
     }
 
-    let command = trimmed.split_whitespace().next().unwrap_or(trimmed);
+    let mut parts = trimmed.split_whitespace();
+    let command = parts.next().unwrap_or(trimmed);
     match command {
         "/about" => Ok(Some(format!(
             "remini-cli v{} (phase2 bootstrap)",
             env!("CARGO_PKG_VERSION")
         ))),
         "/help" | "/?" => Ok(Some(
-            "Available commands:\n/about\n/help\n/tools\n@<path>\n!<command>".to_string(),
+            "Available commands:\n/about\n/help\n/tools [desc|nodesc]\n@<path>\n!<command>"
+                .to_string(),
         )),
-        "/tools" => Ok(Some(
-            "Available tools:\nlist_directory\nread_file\nglob\ngrep_search".to_string(),
-        )),
+        "/tools" => {
+            let mode = parts.next().unwrap_or("nodesc");
+            match mode {
+                "desc" | "descriptions" => Ok(Some(
+                    "Available tools:\nlist_directory - list files and directories\nread_file - read text content from a file\nglob - match files by wildcard pattern\ngrep_search - search text within files".to_string(),
+                )),
+                "nodesc" | "nodescriptions" => Ok(Some(
+                    "Available tools:\nlist_directory\nread_file\nglob\ngrep_search".to_string(),
+                )),
+                other => Err(format!(
+                    "Unsupported /tools option: {other}. Use desc or nodesc."
+                )),
+            }
+        }
         _ => Err(format!("Unknown slash command: {command}")),
     }
 }
@@ -53,6 +66,14 @@ mod tests {
             .expect("tools command should return content");
         assert!(result.contains("read_file"));
         assert!(result.contains("grep_search"));
+    }
+
+    #[test]
+    fn tools_desc_returns_descriptions() {
+        let result = execute_slash_command("/tools desc")
+            .expect("tools desc should succeed")
+            .expect("tools desc should return content");
+        assert!(result.contains("read_file - read text content"));
     }
 
     #[test]
