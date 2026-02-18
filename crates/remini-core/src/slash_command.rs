@@ -6,8 +6,12 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
 
     let command = trimmed.split_whitespace().next().unwrap_or(trimmed);
     match command {
+        "/about" => Ok(Some(format!(
+            "remini-cli v{} (phase2 bootstrap)",
+            env!("CARGO_PKG_VERSION")
+        ))),
         "/help" | "/?" => Ok(Some(
-            "Available commands:\n/help\n/tools\n@<path>\n!<command>".to_string(),
+            "Available commands:\n/about\n/help\n/tools\n@<path>\n!<command>".to_string(),
         )),
         "/tools" => Ok(Some(
             "Available tools:\nlist_directory\nread_file\nglob\ngrep_search".to_string(),
@@ -32,6 +36,14 @@ mod tests {
             .expect("help command should succeed")
             .expect("help command should return content");
         assert!(result.contains("Available commands"));
+    }
+
+    #[test]
+    fn about_command_returns_version() {
+        let result = execute_slash_command("/about")
+            .expect("about command should succeed")
+            .expect("about command should return content");
+        assert!(result.contains("remini-cli v"));
     }
 
     #[test]

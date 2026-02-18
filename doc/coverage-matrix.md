@@ -37,7 +37,7 @@
 | ID | 能力 | 基线参考 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- |
 | CMD-001 | Slash 命令解析与分发 | `packages/cli/src/services/BuiltinCommandLoader.ts` | P0 | In Progress |
-| CMD-002 | `/about` | `packages/cli/src/ui/commands/aboutCommand.ts` | P1 | Not Started |
+| CMD-002 | `/about` | `packages/cli/src/ui/commands/aboutCommand.ts` | P1 | In Progress |
 | CMD-003 | `/auth` | `packages/cli/src/ui/commands/authCommand.ts` | P1 | Not Started |
 | CMD-004 | `/bug` | `packages/cli/src/ui/commands/bugCommand.ts` | P1 | Not Started |
 | CMD-005 | `/chat` + 子命令 | `packages/cli/src/ui/commands/chatCommand.ts` | P0 | Not Started |
