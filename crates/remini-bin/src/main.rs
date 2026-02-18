@@ -5,9 +5,15 @@ use std::process::ExitCode;
 use clap::{Parser, ValueEnum};
 use remini_config::{resolve_settings, ApprovalMode, CliOverrides, Settings};
 use remini_core::{
-    at_command::expand_at_command, bang_command::execute_bang_command, decide_run_mode,
-    normalize_query, slash_command::execute_slash_command, startup_notice,
-    tool_registry::ToolRegistry, OutputFormat, RunMode, RunRequest,
+    at_command::expand_at_command,
+    bang_command::execute_bang_command,
+    decide_run_mode,
+    exit_codes::{EXIT_GENERAL_ERROR, EXIT_INPUT_ERROR, EXIT_SUCCESS},
+    normalize_query,
+    slash_command::execute_slash_command,
+    startup_notice,
+    tool_registry::ToolRegistry,
+    OutputFormat, RunMode, RunRequest,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -90,28 +96,67 @@ fn print_headless_output(output: &str, format: Option<&OutputFormat>) {
     }
 }
 
+fn build_json_error(message: &str, code: u8) -> String {
+    let escaped = json_escape(message);
+    format!(
+        "{{\"response\":\"\",\"stats\":{{\"mode\":\"stub\",\"toolsUsed\":0}},\"error\":{{\"message\":\"{escaped}\",\"code\":{code}}}}}"
+    )
+}
+
+fn build_stream_json_error(message: &str, code: u8) -> Vec<String> {
+    let escaped = json_escape(message);
+    vec![
+        "{\"type\":\"init\",\"sessionId\":\"local-dev\",\"model\":\"stub\"}".to_string(),
+        format!("{{\"type\":\"error\",\"message\":\"{escaped}\",\"code\":{code}}}"),
+        format!("{{\"type\":\"result\",\"error\":\"{escaped}\"}}"),
+    ]
+}
+
+fn return_with_error(message: &str, format: Option<&OutputFormat>, code: u8) -> ExitCode {
+    match format.unwrap_or(&OutputFormat::Text) {
+        OutputFormat::Text => eprintln!("{message}"),
+        OutputFormat::Json => println!("{}", build_json_error(message, code)),
+        OutputFormat::StreamJson => {
+            for line in build_stream_json_error(message, code) {
+                println!("{line}");
+            }
+        }
+    }
+    ExitCode::from(code)
+}
+
 fn main() -> ExitCode {
     let args = CliArgs::parse();
+    let output_format = args.output_format.map(OutputFormat::from);
 
     if args.prompt.is_some() && !args.query.is_empty() {
-        eprintln!("Cannot use both a positional prompt and the --prompt (-p) flag together");
-        return ExitCode::from(1);
+        return return_with_error(
+            "Cannot use both a positional prompt and the --prompt (-p) flag together",
+            output_format.as_ref(),
+            EXIT_INPUT_ERROR,
+        );
     }
 
     if args.prompt.is_some() && args.prompt_interactive.is_some() {
-        eprintln!("Cannot use both --prompt (-p) and --prompt-interactive (-i) together");
-        return ExitCode::from(1);
+        return return_with_error(
+            "Cannot use both --prompt (-p) and --prompt-interactive (-i) together",
+            output_format.as_ref(),
+            EXIT_INPUT_ERROR,
+        );
     }
 
     let approval_mode = if let Some(raw_mode) = args.approval_mode.as_deref() {
         match ApprovalMode::parse(raw_mode) {
             Some(mode) => Some(mode),
             None => {
-                eprintln!(
-                    "Invalid approval mode: {raw_mode}. Valid values are: {}",
-                    ApprovalMode::ALLOWED_VALUES.join(", ")
+                return return_with_error(
+                    &format!(
+                        "Invalid approval mode: {raw_mode}. Valid values are: {}",
+                        ApprovalMode::ALLOWED_VALUES.join(", ")
+                    ),
+                    output_format.as_ref(),
+                    EXIT_INPUT_ERROR,
                 );
-                return ExitCode::from(1);
             }
         }
     } else {
@@ -131,7 +176,7 @@ fn main() -> ExitCode {
         query: normalize_query(&args.query),
         prompt: args.prompt,
         prompt_interactive: args.prompt_interactive,
-        output_format: args.output_format.map(OutputFormat::from),
+        output_format: output_format.clone(),
     };
     let stdin_is_tty = std::io::stdin().is_terminal();
     let mode = decide_run_mode(&request, stdin_is_tty);
@@ -146,7 +191,7 @@ fn main() -> ExitCode {
                 "remini interactive mode bootstrap complete (Phase 1 skeleton, approval-mode={}).",
                 effective_settings.approval_mode.as_str()
             );
-            ExitCode::SUCCESS
+            ExitCode::from(EXIT_SUCCESS)
         }
         RunMode::Headless => {
             if let Some(raw_input) = request.prompt.as_ref().or(request.query.as_ref()) {
@@ -160,25 +205,34 @@ fn main() -> ExitCode {
                                 Ok(Some(expanded)) => expanded,
                                 Ok(None) => raw_input.to_string(),
                                 Err(err) => {
-                                    eprintln!("{err}");
-                                    return ExitCode::from(1);
+                                    return return_with_error(
+                                        &err,
+                                        request.output_format.as_ref(),
+                                        EXIT_INPUT_ERROR,
+                                    );
                                 }
                             }
                         }
                         Err(err) => {
-                            eprintln!("{err}");
-                            return ExitCode::from(1);
+                            return return_with_error(
+                                &err,
+                                request.output_format.as_ref(),
+                                EXIT_GENERAL_ERROR,
+                            );
                         }
                     },
                     Err(err) => {
-                        eprintln!("{err}");
-                        return ExitCode::from(1);
+                        return return_with_error(
+                            &err,
+                            request.output_format.as_ref(),
+                            EXIT_INPUT_ERROR,
+                        );
                     }
                 };
 
                 print_headless_output(&response_text, request.output_format.as_ref());
             }
-            ExitCode::SUCCESS
+            ExitCode::from(EXIT_SUCCESS)
         }
     }
 }
@@ -208,5 +262,20 @@ mod tests {
             OutputFormat::from(CliOutputFormat::StreamJson),
             OutputFormat::StreamJson
         );
+    }
+
+    #[test]
+    fn build_json_error_contains_code() {
+        let payload = build_json_error("bad input", EXIT_INPUT_ERROR);
+        assert!(payload.contains("\"code\":42"));
+        assert!(payload.contains("bad input"));
+    }
+
+    #[test]
+    fn build_stream_json_error_contains_error_event() {
+        let lines = build_stream_json_error("failure", EXIT_GENERAL_ERROR);
+        assert_eq!(lines.len(), 3);
+        assert!(lines[1].contains("\"type\":\"error\""));
+        assert!(lines[1].contains("\"code\":1"));
     }
 }

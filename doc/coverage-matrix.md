@@ -30,7 +30,7 @@
 | CLI-012 | `--output-format/-o` 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CLI-013 | `--help`/`--version` 行为 | `packages/cli/src/config/config.ts` | P0 | Done |
 | CLI-014 | `--debug` 与 debug 日志 | `packages/cli/src/config/config.ts` | P1 | Not Started |
-| CLI-015 | 返回码对齐（0/1/42/53） | `docs/cli/headless.md` | P0 | Not Started |
+| CLI-015 | 返回码对齐（0/1/42/53） | `docs/cli/headless.md` | P0 | In Progress |
 
 ## B. Slash 命令系统
 
