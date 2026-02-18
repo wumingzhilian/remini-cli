@@ -55,7 +55,7 @@
 | CMD-017 | `/init` | `packages/cli/src/ui/commands/initCommand.ts` | P1 | Not Started |
 | CMD-018 | `/mcp` | `packages/cli/src/ui/commands/mcpCommand.ts` | P0 | Not Started |
 | CMD-019 | `/memory` | `packages/cli/src/ui/commands/memoryCommand.ts` | P0 | Not Started |
-| CMD-020 | `/model` | `packages/cli/src/ui/commands/modelCommand.ts` | P1 | Not Started |
+| CMD-020 | `/model` | `packages/cli/src/ui/commands/modelCommand.ts` | P1 | In Progress |
 | CMD-021 | `/permissions` | `packages/cli/src/ui/commands/permissionsCommand.ts` | P1 | Not Started |
 | CMD-022 | `/plan` | `packages/cli/src/ui/commands/planCommand.ts` | P1 | Not Started |
 | CMD-023 | `/policies` | `packages/cli/src/ui/commands/policiesCommand.ts` | P1 | Not Started |

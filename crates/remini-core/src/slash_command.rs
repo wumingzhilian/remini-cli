@@ -12,9 +12,26 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
             env!("CARGO_PKG_VERSION")
         ))),
         "/help" | "/?" => Ok(Some(
-            "Available commands:\n/about\n/help\n/tools [desc|nodesc]\n@<path>\n!<command>"
-                .to_string(),
+            "Available commands:\n/about\n/help\n/model [set <name>]\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
         )),
+        "/model" => {
+            let action = parts.next();
+            match action {
+                None => Ok(Some("Current model: auto (stub)".to_string())),
+                Some("set") => {
+                    if let Some(model_name) = parts.next() {
+                        Ok(Some(format!(
+                            "Model set to {model_name} (session-only stub)"
+                        )))
+                    } else {
+                        Err("Usage: /model set <model-name>".to_string())
+                    }
+                }
+                Some(other) => Err(format!(
+                    "Unsupported /model option: {other}. Use /model or /model set <name>."
+                )),
+            }
+        }
         "/tools" => {
             let mode = parts.next().unwrap_or("nodesc");
             match mode {
@@ -74,6 +91,22 @@ mod tests {
             .expect("tools desc should succeed")
             .expect("tools desc should return content");
         assert!(result.contains("read_file - read text content"));
+    }
+
+    #[test]
+    fn model_command_returns_current_model() {
+        let result = execute_slash_command("/model")
+            .expect("model command should succeed")
+            .expect("model command should return content");
+        assert!(result.contains("Current model: auto"));
+    }
+
+    #[test]
+    fn model_set_command_returns_confirmation() {
+        let result = execute_slash_command("/model set gemini-2.5-flash")
+            .expect("model set command should succeed")
+            .expect("model set command should return content");
+        assert!(result.contains("Model set to gemini-2.5-flash"));
     }
 
     #[test]
