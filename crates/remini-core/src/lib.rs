@@ -20,6 +20,7 @@ pub enum OutputFormat {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RunRequest {
     pub query: Option<String>,
+    pub model: Option<String>,
     pub prompt: Option<String>,
     pub prompt_interactive: Option<String>,
     pub output_format: Option<OutputFormat>,

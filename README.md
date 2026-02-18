@@ -13,6 +13,7 @@ Rust 重写版 `gemini-cli` 项目。
 1. Rust workspace 已初始化（`remini-bin`、`remini-core`、`remini-config`、`remini-tools`）。
 2. CLI 最小链路已打通：
    - 交互/非交互模式判断
+   - `--model`（headless 输出中携带 model 字段）
    - `--approval-mode`
    - `--output-format`（`text/json/stream-json`）
 3. 只读工具最小实现：
@@ -43,6 +44,9 @@ cargo run -p remini-bin -- -p "/help"
 
 # JSON 输出
 cargo run -p remini-bin -- -p "/tools" -o json
+
+# 指定 model（会在 JSON stats 中显示）
+cargo run -p remini-bin -- -m gemini-2.5-flash -p "/tools" -o json
 
 # Stream JSON 输出
 cargo run -p remini-bin -- -p "/tools desc" -o stream-json

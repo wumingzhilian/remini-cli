@@ -78,18 +78,23 @@ fn json_escape(value: &str) -> String {
     escaped
 }
 
-fn print_headless_output(output: &str, format: Option<&OutputFormat>) {
+fn print_headless_output(output: &str, format: Option<&OutputFormat>, model: Option<&str>) {
+    let model_name = model.unwrap_or("auto");
     match format.unwrap_or(&OutputFormat::Text) {
         OutputFormat::Text => println!("{output}"),
         OutputFormat::Json => {
             let escaped = json_escape(output);
             println!(
-                "{{\"response\":\"{escaped}\",\"stats\":{{\"mode\":\"stub\",\"toolsUsed\":0}}}}"
+                "{{\"response\":\"{escaped}\",\"stats\":{{\"mode\":\"stub\",\"toolsUsed\":0,\"model\":\"{}\"}}}}",
+                json_escape(model_name)
             );
         }
         OutputFormat::StreamJson => {
             let escaped = json_escape(output);
-            println!("{{\"type\":\"init\",\"sessionId\":\"local-dev\",\"model\":\"stub\"}}");
+            println!(
+                "{{\"type\":\"init\",\"sessionId\":\"local-dev\",\"model\":\"{}\"}}",
+                json_escape(model_name)
+            );
             println!("{{\"type\":\"message\",\"role\":\"assistant\",\"content\":\"{escaped}\"}}");
             println!("{{\"type\":\"result\",\"response\":\"{escaped}\"}}");
         }
@@ -106,7 +111,7 @@ fn build_json_error(message: &str, code: u8) -> String {
 fn build_stream_json_error(message: &str, code: u8) -> Vec<String> {
     let escaped = json_escape(message);
     vec![
-        "{\"type\":\"init\",\"sessionId\":\"local-dev\",\"model\":\"stub\"}".to_string(),
+        "{\"type\":\"init\",\"sessionId\":\"local-dev\",\"model\":\"auto\"}".to_string(),
         format!("{{\"type\":\"error\",\"message\":\"{escaped}\",\"code\":{code}}}"),
         format!("{{\"type\":\"result\",\"error\":\"{escaped}\"}}"),
     ]
@@ -174,6 +179,7 @@ fn main() -> ExitCode {
 
     let request = RunRequest {
         query: normalize_query(&args.query),
+        model: args.model,
         prompt: args.prompt,
         prompt_interactive: args.prompt_interactive,
         output_format: output_format.clone(),
@@ -230,7 +236,11 @@ fn main() -> ExitCode {
                     }
                 };
 
-                print_headless_output(&response_text, request.output_format.as_ref());
+                print_headless_output(
+                    &response_text,
+                    request.output_format.as_ref(),
+                    request.model.as_deref(),
+                );
             }
             ExitCode::from(EXIT_SUCCESS)
         }
