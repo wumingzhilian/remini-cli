@@ -11,8 +11,9 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
             "remini-cli v{} (phase2 bootstrap)",
             env!("CARGO_PKG_VERSION")
         ))),
+        "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
         "/help" | "/?" => Ok(Some(
-            "Available commands:\n/about\n/help\n/model [set <name>]\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
+            "Available commands:\n/about\n/help\n/model [set <name>]\n/quit\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
         )),
         "/model" => {
             let action = parts.next();
@@ -107,6 +108,14 @@ mod tests {
             .expect("model set command should succeed")
             .expect("model set command should return content");
         assert!(result.contains("Model set to gemini-2.5-flash"));
+    }
+
+    #[test]
+    fn quit_command_returns_message() {
+        let result = execute_slash_command("/quit")
+            .expect("quit command should succeed")
+            .expect("quit command should return content");
+        assert!(result.contains("Session ended"));
     }
 
     #[test]
