@@ -11,9 +11,12 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
             "remini-cli v{} (phase2 bootstrap)",
             env!("CARGO_PKG_VERSION")
         ))),
+        "/auth" => Ok(Some(
+            "Auth methods (stub):\n- Login with Google\n- GEMINI_API_KEY\n- Vertex AI".to_string(),
+        )),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
         "/help" | "/?" => Ok(Some(
-            "Available commands:\n/about\n/help\n/model [set <name>]\n/quit\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
+            "Available commands:\n/about\n/auth\n/help\n/model [set <name>]\n/quit\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
         )),
         "/model" => {
             let action = parts.next();
@@ -116,6 +119,15 @@ mod tests {
             .expect("quit command should succeed")
             .expect("quit command should return content");
         assert!(result.contains("Session ended"));
+    }
+
+    #[test]
+    fn auth_command_returns_methods() {
+        let result = execute_slash_command("/auth")
+            .expect("auth command should succeed")
+            .expect("auth command should return content");
+        assert!(result.contains("Login with Google"));
+        assert!(result.contains("GEMINI_API_KEY"));
     }
 
     #[test]
