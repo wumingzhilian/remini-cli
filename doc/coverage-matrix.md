@@ -110,7 +110,7 @@
 
 | ID | 能力 | 基线参考 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- |
-| CFG-001 | settings 多层加载顺序 | `docs/reference/configuration.md` | P0 | Not Started |
+| CFG-001 | settings 多层加载顺序 | `docs/reference/configuration.md` | P0 | In Progress |
 | CFG-002 | schema 默认值与校验 | `schemas/settings.schema.json` | P0 | Not Started |
 | CFG-003 | env 变量展开 | `packages/cli/src/config/settings.ts` | P1 | Not Started |
 | CFG-004 | trusted folders | `packages/cli/src/config/trustedFolders.ts` | P0 | Not Started |

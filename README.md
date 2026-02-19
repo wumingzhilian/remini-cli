@@ -15,6 +15,7 @@ Rust 重写版 `gemini-cli` 项目。
    - 交互/非交互模式判断
    - `--model`（headless 输出中携带 model 字段）
    - `--approval-mode`
+   - settings 最小加载（`~/.gemini/settings.json` 与 `<workspace>/.gemini/settings.json`，workspace 优先）
    - `--output-format`（`text/json/stream-json`）
 3. 只读工具最小实现：
    - `read_file`

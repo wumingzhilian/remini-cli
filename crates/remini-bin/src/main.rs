@@ -3,7 +3,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use clap::{Parser, ValueEnum};
-use remini_config::{resolve_settings, ApprovalMode, CliOverrides, Settings};
+use remini_config::{load_settings_for_workspace, resolve_settings, ApprovalMode, CliOverrides};
 use remini_core::{
     at_command::expand_at_command,
     bang_command::execute_bang_command,
@@ -181,7 +181,16 @@ fn main() -> ExitCode {
         None
     };
 
-    let base_settings = Settings::default();
+    let base_settings = match load_settings_for_workspace(Path::new(".")) {
+        Ok(settings) => settings,
+        Err(err) => {
+            return return_with_error(
+                &format!("Failed to load settings: {err}"),
+                output_format.as_ref(),
+                EXIT_INPUT_ERROR,
+            );
+        }
+    };
     let effective_settings = resolve_settings(
         &base_settings,
         &CliOverrides {
