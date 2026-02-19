@@ -22,7 +22,7 @@ Rust 重写版 `gemini-cli` 项目。
    - `glob_search`
    - `grep_search`
 4. 命令最小实现：
-   - Slash：`/about`、`/auth`、`/help`、`/model`、`/model set <name>`、`/quit`、`/tools`、`/tools desc|nodesc`
+   - Slash：`/about`、`/auth`、`/clear`、`/help`、`/model`、`/model set <name>`、`/quit`、`/tools`、`/tools desc|nodesc`
    - At：`@path`（文件/目录最小展开）
    - Bang：`!command`（最小 shell 执行）
 5. headless 错误结构与输入错误退出码（`42`）已接入。

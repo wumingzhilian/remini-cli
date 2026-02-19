@@ -14,9 +14,10 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         "/auth" => Ok(Some(
             "Auth methods (stub):\n- Login with Google\n- GEMINI_API_KEY\n- Vertex AI".to_string(),
         )),
+        "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
         "/help" | "/?" => Ok(Some(
-            "Available commands:\n/about\n/auth\n/help\n/model [set <name>]\n/quit\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
+            "Available commands:\n/about\n/auth\n/clear\n/help\n/model [set <name>]\n/quit\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
         )),
         "/model" => {
             let action = parts.next();
@@ -128,6 +129,14 @@ mod tests {
             .expect("auth command should return content");
         assert!(result.contains("Login with Google"));
         assert!(result.contains("GEMINI_API_KEY"));
+    }
+
+    #[test]
+    fn clear_command_returns_message() {
+        let result = execute_slash_command("/clear")
+            .expect("clear command should succeed")
+            .expect("clear command should return content");
+        assert!(result.contains("Screen cleared"));
     }
 
     #[test]
