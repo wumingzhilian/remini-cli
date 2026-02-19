@@ -33,27 +33,28 @@ pub fn expand_at_command(
     }
 
     let path = resolve_path(raw_path, cwd);
-    let read_file_result = registry.execute(ToolRequest::ReadFile { path: path.clone() });
-    if let Ok(ToolResponse::ReadFile(content)) = read_file_result {
-        let payload = if tail.is_empty() {
-            content
-        } else {
-            format!("{content}\n\n{tail}")
-        };
-        return Ok(Some(payload));
-    }
+    let read_many_result = registry.execute(ToolRequest::ReadManyFiles {
+        path: path.clone(),
+        max_files: 64,
+    });
+    if let Ok(ToolResponse::ReadManyFiles(files)) = read_many_result {
+        if files.is_empty() {
+            return Err(format!(
+                "No readable text files found for @ path: {}",
+                path.display()
+            ));
+        }
 
-    let list_dir_result = registry.execute(ToolRequest::ListDirectory { path: path.clone() });
-    if let Ok(ToolResponse::ListDirectory(entries)) = list_dir_result {
-        let listing = entries
+        let body = files
             .into_iter()
-            .map(|entry| entry.name)
+            .map(|file| format!("## {}\n{}", file.path.display(), file.content))
             .collect::<Vec<_>>()
-            .join("\n");
+            .join("\n\n");
+
         let payload = if tail.is_empty() {
-            listing
+            body
         } else {
-            format!("{listing}\n\n{tail}")
+            format!("{body}\n\n{tail}")
         };
         return Ok(Some(payload));
     }
@@ -98,7 +99,10 @@ mod tests {
         let registry = ToolRegistry;
         let result =
             expand_at_command("@note.txt summarize", &temp_dir, &registry).expect("should work");
-        assert_eq!(result, Some("hello from file\n\nsummarize".to_string()));
+        let payload = result.expect("expected expanded payload");
+        assert!(payload.contains("## "));
+        assert!(payload.contains("hello from file"));
+        assert!(payload.contains("summarize"));
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }
@@ -112,8 +116,9 @@ mod tests {
         let registry = ToolRegistry;
         let result = expand_at_command("@.", &temp_dir, &registry).expect("should work");
         let payload = result.expect("expected expanded payload");
-        assert!(payload.contains("a.txt"));
-        assert!(payload.contains("b.txt"));
+        assert!(payload.contains("## "));
+        assert!(payload.contains("a"));
+        assert!(payload.contains("b"));
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }

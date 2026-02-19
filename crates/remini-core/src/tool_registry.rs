@@ -1,12 +1,14 @@
 use std::path::PathBuf;
 
 use remini_tools::{
-    glob_search, grep_search, list_directory, read_file, DirectoryEntry, GrepMatch, ToolError,
+    glob_search, grep_search, list_directory, read_file, read_many_files, DirectoryEntry,
+    FileContent, GrepMatch, ToolError,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolRequest {
     ReadFile { path: PathBuf },
+    ReadManyFiles { path: PathBuf, max_files: usize },
     ListDirectory { path: PathBuf },
     GlobSearch { root: PathBuf, pattern: String },
     GrepSearch { root: PathBuf, query: String },
@@ -15,6 +17,7 @@ pub enum ToolRequest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolResponse {
     ReadFile(String),
+    ReadManyFiles(Vec<FileContent>),
     ListDirectory(Vec<DirectoryEntry>),
     GlobSearch(Vec<PathBuf>),
     GrepSearch(Vec<GrepMatch>),
@@ -29,6 +32,10 @@ impl ToolRegistry {
             ToolRequest::ReadFile { path } => {
                 let content = read_file(&path)?;
                 Ok(ToolResponse::ReadFile(content))
+            }
+            ToolRequest::ReadManyFiles { path, max_files } => {
+                let content = read_many_files(&path, max_files)?;
+                Ok(ToolResponse::ReadManyFiles(content))
             }
             ToolRequest::ListDirectory { path } => {
                 let entries = list_directory(&path)?;
@@ -98,6 +105,29 @@ mod tests {
             _ => panic!("expected list directory response"),
         };
         assert_eq!(entries.len(), 2);
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn read_many_files_request_works() {
+        let temp_dir = make_temp_dir("remini-core-tool-registry-read-many");
+        fs::write(temp_dir.join("a.txt"), "a").expect("failed to write fixture");
+        fs::write(temp_dir.join("b.txt"), "b").expect("failed to write fixture");
+
+        let registry = ToolRegistry;
+        let response = registry
+            .execute(ToolRequest::ReadManyFiles {
+                path: temp_dir.clone(),
+                max_files: 10,
+            })
+            .expect("tool request should succeed");
+
+        let files = match response {
+            ToolResponse::ReadManyFiles(items) => items,
+            _ => panic!("expected read-many-files response"),
+        };
+        assert_eq!(files.len(), 2);
+
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }
 

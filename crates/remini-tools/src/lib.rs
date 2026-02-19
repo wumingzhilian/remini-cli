@@ -39,6 +39,12 @@ pub struct GrepMatch {
     pub line: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FileContent {
+    pub path: PathBuf,
+    pub content: String,
+}
+
 pub fn read_file(path: &Path) -> Result<String, ToolError> {
     if !path.exists() {
         return Err(ToolError {
@@ -55,6 +61,46 @@ pub fn read_file(path: &Path) -> Result<String, ToolError> {
     }
 
     fs::read_to_string(path).map_err(|err| map_io_error(err, path))
+}
+
+pub fn read_many_files(path: &Path, max_files: usize) -> Result<Vec<FileContent>, ToolError> {
+    if !path.exists() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotFound,
+            message: format!("Path does not exist: {}", path.display()),
+        });
+    }
+
+    let mut files = Vec::new();
+    if path.is_file() {
+        files.push(path.to_path_buf());
+    } else if path.is_dir() {
+        collect_files(path, &mut files)?;
+    } else {
+        return Err(ToolError {
+            kind: ToolErrorKind::Io,
+            message: format!("Unsupported path type: {}", path.display()),
+        });
+    }
+
+    files.sort();
+    if files.len() > max_files {
+        files.truncate(max_files);
+    }
+
+    let mut result = Vec::new();
+    for file in files {
+        let content = match fs::read_to_string(&file) {
+            Ok(text) => text,
+            Err(_) => continue,
+        };
+        result.push(FileContent {
+            path: file,
+            content,
+        });
+    }
+
+    Ok(result)
 }
 
 pub fn list_directory(path: &Path) -> Result<Vec<DirectoryEntry>, ToolError> {
@@ -376,6 +422,38 @@ mod tests {
         let recursive_md_matches =
             glob_search(&temp_dir, "**/*.md").expect("glob_search should succeed");
         assert_eq!(recursive_md_matches.len(), 1);
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn read_many_files_reads_directory_files() {
+        let temp_dir = make_temp_dir("remini-tools-read-many-files");
+        fs::write(temp_dir.join("a.txt"), "a").expect("failed to write test file");
+        fs::write(temp_dir.join("b.txt"), "b").expect("failed to write test file");
+        fs::create_dir_all(temp_dir.join("nested")).expect("failed to create nested dir");
+        fs::write(temp_dir.join("nested").join("c.txt"), "c").expect("failed to write test file");
+
+        let contents =
+            read_many_files(&temp_dir, 10).expect("read_many_files should succeed for directory");
+        assert_eq!(contents.len(), 3);
+        assert!(contents.iter().any(|item| item.content == "a"));
+        assert!(contents.iter().any(|item| item.content == "b"));
+        assert!(contents.iter().any(|item| item.content == "c"));
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn read_many_files_honors_limit() {
+        let temp_dir = make_temp_dir("remini-tools-read-many-limit");
+        fs::write(temp_dir.join("a.txt"), "a").expect("failed to write test file");
+        fs::write(temp_dir.join("b.txt"), "b").expect("failed to write test file");
+        fs::write(temp_dir.join("c.txt"), "c").expect("failed to write test file");
+
+        let contents =
+            read_many_files(&temp_dir, 2).expect("read_many_files should succeed for directory");
+        assert_eq!(contents.len(), 2);
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }

@@ -19,6 +19,7 @@ Rust 重写版 `gemini-cli` 项目。
    - `--output-format`（`text/json/stream-json`）
 3. 只读工具最小实现：
    - `read_file`
+   - `read_many_files`
    - `list_directory`
    - `glob_search`
    - `grep_search`
