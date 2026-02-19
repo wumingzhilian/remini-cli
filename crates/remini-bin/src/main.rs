@@ -59,6 +59,9 @@ struct CliArgs {
     #[arg(long = "approval-mode")]
     approval_mode: Option<String>,
 
+    #[arg(short = 'y', long = "yolo", default_value_t = false)]
+    yolo: bool,
+
     #[arg(short = 'o', long = "output-format", value_enum)]
     output_format: Option<CliOutputFormat>,
 }
@@ -150,7 +153,17 @@ fn main() -> ExitCode {
         );
     }
 
-    let approval_mode = if let Some(raw_mode) = args.approval_mode.as_deref() {
+    if args.yolo && args.approval_mode.is_some() {
+        return return_with_error(
+            "Cannot use both --yolo (-y) and --approval-mode together. Use --approval-mode=yolo instead.",
+            output_format.as_ref(),
+            EXIT_INPUT_ERROR,
+        );
+    }
+
+    let approval_mode = if args.yolo {
+        Some(ApprovalMode::Yolo)
+    } else if let Some(raw_mode) = args.approval_mode.as_deref() {
         match ApprovalMode::parse(raw_mode) {
             Some(mode) => Some(mode),
             None => {
@@ -287,5 +300,12 @@ mod tests {
         assert_eq!(lines.len(), 3);
         assert!(lines[1].contains("\"type\":\"error\""));
         assert!(lines[1].contains("\"code\":1"));
+    }
+
+    #[test]
+    fn yolo_conflict_error_message_is_stable() {
+        let msg = "Cannot use both --yolo (-y) and --approval-mode together. Use --approval-mode=yolo instead.";
+        let payload = build_json_error(msg, EXIT_INPUT_ERROR);
+        assert!(payload.contains("--approval-mode=yolo"));
     }
 }
