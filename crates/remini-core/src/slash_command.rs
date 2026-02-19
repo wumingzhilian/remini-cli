@@ -17,7 +17,7 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
         "/help" | "/?" => Ok(Some(
-            "Available commands:\n/about\n/auth\n/clear\n/help\n/model [set <name>]\n/quit\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
+            "Available commands:\n/about\n/auth\n/clear\n/help\n/model [set <name>]\n/quit\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>".to_string(),
         )),
         "/model" => {
             let action = parts.next();
@@ -48,6 +48,24 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )),
                 other => Err(format!(
                     "Unsupported /tools option: {other}. Use desc or nodesc."
+                )),
+            }
+        }
+        "/stats" => {
+            let view = parts.next().unwrap_or("session");
+            match view {
+                "session" => Ok(Some(
+                    "Session stats (stub): duration=0s, turns=0, toolCalls=0".to_string(),
+                )),
+                "model" => Ok(Some(
+                    "Model stats (stub): model=auto, inputTokens=0, outputTokens=0".to_string(),
+                )),
+                "tools" => Ok(Some(
+                    "Tool stats (stub): list_directory=0, read_file=0, glob=0, grep_search=0"
+                        .to_string(),
+                )),
+                other => Err(format!(
+                    "Unsupported /stats option: {other}. Use session, model, or tools."
                 )),
             }
         }
@@ -137,6 +155,22 @@ mod tests {
             .expect("clear command should succeed")
             .expect("clear command should return content");
         assert!(result.contains("Screen cleared"));
+    }
+
+    #[test]
+    fn stats_command_defaults_to_session_view() {
+        let result = execute_slash_command("/stats")
+            .expect("stats command should succeed")
+            .expect("stats command should return content");
+        assert!(result.contains("Session stats"));
+    }
+
+    #[test]
+    fn stats_tools_view_returns_tool_metrics() {
+        let result = execute_slash_command("/stats tools")
+            .expect("stats tools command should succeed")
+            .expect("stats tools command should return content");
+        assert!(result.contains("Tool stats"));
     }
 
     #[test]
