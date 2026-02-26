@@ -1,5 +1,5 @@
 use std::io::IsTerminal;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::{Parser, ValueEnum};
@@ -62,8 +62,23 @@ struct CliArgs {
     #[arg(short = 'y', long = "yolo", default_value_t = false)]
     yolo: bool,
 
+    #[arg(
+        long = "include-directories",
+        value_name = "DIR",
+        action = clap::ArgAction::Append,
+        value_delimiter = ','
+    )]
+    include_directories: Vec<String>,
+
     #[arg(short = 'o', long = "output-format", value_enum)]
     output_format: Option<CliOutputFormat>,
+}
+
+fn normalize_include_directories(raw: Vec<String>) -> Vec<String> {
+    raw.into_iter()
+        .map(|item| item.trim().to_string())
+        .filter(|item| !item.is_empty())
+        .collect()
 }
 
 fn json_escape(value: &str) -> String {
@@ -136,6 +151,7 @@ fn return_with_error(message: &str, format: Option<&OutputFormat>, code: u8) -> 
 fn main() -> ExitCode {
     let args = CliArgs::parse();
     let output_format = args.output_format.map(OutputFormat::from);
+    let include_directories = normalize_include_directories(args.include_directories.clone());
 
     if args.prompt.is_some() && !args.query.is_empty() {
         return return_with_error(
@@ -202,6 +218,7 @@ fn main() -> ExitCode {
     let request = RunRequest {
         query: normalize_query(&args.query),
         model: args.model,
+        include_directories,
         prompt: args.prompt,
         prompt_interactive: args.prompt_interactive,
         output_format: output_format.clone(),
@@ -229,7 +246,17 @@ fn main() -> ExitCode {
                         Ok(Some(shell_output)) => shell_output,
                         Ok(None) => {
                             let registry = ToolRegistry;
-                            match expand_at_command(raw_input, Path::new("."), &registry) {
+                            let include_dirs = request
+                                .include_directories
+                                .iter()
+                                .map(PathBuf::from)
+                                .collect::<Vec<_>>();
+                            match expand_at_command(
+                                raw_input,
+                                Path::new("."),
+                                &include_dirs,
+                                &registry,
+                            ) {
                                 Ok(Some(expanded)) => expanded,
                                 Ok(None) => raw_input.to_string(),
                                 Err(err) => {
@@ -316,5 +343,16 @@ mod tests {
         let msg = "Cannot use both --yolo (-y) and --approval-mode together. Use --approval-mode=yolo instead.";
         let payload = build_json_error(msg, EXIT_INPUT_ERROR);
         assert!(payload.contains("--approval-mode=yolo"));
+    }
+
+    #[test]
+    fn include_directories_are_trimmed() {
+        let dirs = normalize_include_directories(vec![
+            " ./one ".to_string(),
+            "".to_string(),
+            "two".to_string(),
+            "   ".to_string(),
+        ]);
+        assert_eq!(dirs, vec!["./one".to_string(), "two".to_string()]);
     }
 }

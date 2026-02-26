@@ -15,6 +15,7 @@ Rust 重写版 `gemini-cli` 项目。
    - 交互/非交互模式判断
    - `--model`（headless 输出中携带 model 字段）
    - `--approval-mode`
+   - `--include-directories`（支持逗号分隔与多次传入，用于 `@path` 查找附加目录）
    - settings 最小加载（`~/.gemini/settings.json` 与 `<workspace>/.gemini/settings.json`，workspace 优先）
    - `--output-format`（`text/json/stream-json`）
 3. 只读工具最小实现：
@@ -55,6 +56,9 @@ cargo run -p remini-bin -- -p "/tools desc" -o stream-json
 
 # @path 示例
 cargo run -p remini-bin -- -p "@Cargo.toml summarize"
+
+# 从附加目录解析 @path（可多次传入或逗号分隔）
+cargo run -p remini-bin -- --include-directories docs,crates -p "@README.md summarize"
 
 # !command 示例
 cargo run -p remini-bin -- -p "!printf hello"

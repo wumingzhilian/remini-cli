@@ -21,6 +21,7 @@ pub enum OutputFormat {
 pub struct RunRequest {
     pub query: Option<String>,
     pub model: Option<String>,
+    pub include_directories: Vec<String>,
     pub prompt: Option<String>,
     pub prompt_interactive: Option<String>,
     pub output_format: Option<OutputFormat>,
