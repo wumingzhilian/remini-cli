@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -99,6 +99,26 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )),
                 other => Err(format!(
                     "Unsupported /ide option: {other}. Use status, enable, or disable."
+                )),
+            }
+        }
+        "/theme" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some(
+                    "Available themes (stub): default, light, dark".to_string(),
+                )),
+                "set" => {
+                    if let Some(name) = parts.next() {
+                        Ok(Some(format!(
+                            "Theme set to {name} for current session (stub)."
+                        )))
+                    } else {
+                        Err("Usage: /theme set <name>".to_string())
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /theme option: {other}. Use list or set <name>."
                 )),
             }
         }
@@ -227,6 +247,7 @@ mod tests {
         assert!(result.contains("/ide"));
         assert!(result.contains("/init"));
         assert!(result.contains("/privacy"));
+        assert!(result.contains("/theme"));
     }
 
     #[test]
@@ -437,6 +458,29 @@ mod tests {
             .expect("ide disable should return content");
         assert!(enabled.contains("enabled"));
         assert!(disabled.contains("disabled"));
+    }
+
+    #[test]
+    fn theme_command_lists_themes() {
+        let result = execute_slash_command("/theme")
+            .expect("theme command should succeed")
+            .expect("theme command should return content");
+        assert!(result.contains("Available themes"));
+    }
+
+    #[test]
+    fn theme_set_requires_name() {
+        let result = execute_slash_command("/theme set");
+        assert!(result.is_err());
+        assert_eq!(result.expect_err("should fail"), "Usage: /theme set <name>");
+    }
+
+    #[test]
+    fn theme_set_accepts_name() {
+        let result = execute_slash_command("/theme set dark")
+            .expect("theme set should succeed")
+            .expect("theme set should return content");
+        assert!(result.contains("Theme set to dark"));
     }
 
     #[test]

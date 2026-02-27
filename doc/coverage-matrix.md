@@ -70,7 +70,7 @@
 | CMD-032 | `/skills` | `packages/cli/src/ui/commands/skillsCommand.ts` | P0 | Not Started |
 | CMD-033 | `/stats` | `packages/cli/src/ui/commands/statsCommand.ts` | P1 | In Progress |
 | CMD-034 | `/terminal-setup` | `packages/cli/src/ui/commands/terminalSetupCommand.ts` | P2 | Not Started |
-| CMD-035 | `/theme` | `packages/cli/src/ui/commands/themeCommand.ts` | P2 | Not Started |
+| CMD-035 | `/theme` | `packages/cli/src/ui/commands/themeCommand.ts` | P2 | In Progress |
 | CMD-036 | `/tools` | `packages/cli/src/ui/commands/toolsCommand.ts` | P1 | In Progress |
 | CMD-037 | `/vim` | `packages/cli/src/ui/commands/vimCommand.ts` | P2 | Not Started |
 | CMD-038 | `@path` 注入 | `docs/reference/commands.md` | P0 | In Progress |
