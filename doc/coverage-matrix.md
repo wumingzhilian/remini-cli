@@ -52,7 +52,7 @@
 | CMD-014 | `/help` | `packages/cli/src/ui/commands/helpCommand.ts` | P0 | In Progress |
 | CMD-015 | `/hooks` | `packages/cli/src/ui/commands/hooksCommand.ts` | P1 | Not Started |
 | CMD-016 | `/ide` | `packages/cli/src/ui/commands/ideCommand.ts` | P1 | Not Started |
-| CMD-017 | `/init` | `packages/cli/src/ui/commands/initCommand.ts` | P1 | Not Started |
+| CMD-017 | `/init` | `packages/cli/src/ui/commands/initCommand.ts` | P1 | In Progress |
 | CMD-018 | `/mcp` | `packages/cli/src/ui/commands/mcpCommand.ts` | P0 | Not Started |
 | CMD-019 | `/memory` | `packages/cli/src/ui/commands/memoryCommand.ts` | P0 | Not Started |
 | CMD-020 | `/model` | `packages/cli/src/ui/commands/modelCommand.ts` | P1 | In Progress |
