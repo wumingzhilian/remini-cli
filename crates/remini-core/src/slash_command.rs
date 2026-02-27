@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -53,6 +53,27 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
             Ok(Some(format!(
                 "Copied message {target} to clipboard (stub)."
             )))
+        }
+        "/settings" => {
+            let action = parts.next().unwrap_or("show");
+            match action {
+                "show" => Ok(Some(
+                    "Settings (stub): model=auto, approvalMode=default, sandbox=false".to_string(),
+                )),
+                "set" => {
+                    let key = parts.next();
+                    let value = parts.next();
+                    match (key, value) {
+                        (Some(key), Some(value)) => Ok(Some(format!(
+                            "Setting updated: {key}={value} (session-only stub)."
+                        ))),
+                        _ => Err("Usage: /settings set <key> <value>".to_string()),
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /settings option: {other}. Use show or set <key> <value>."
+                )),
+            }
         }
         "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
@@ -284,6 +305,32 @@ mod tests {
             .expect("copy command should succeed")
             .expect("copy command should return content");
         assert!(result.contains("Copied message 12"));
+    }
+
+    #[test]
+    fn settings_command_defaults_to_show() {
+        let result = execute_slash_command("/settings")
+            .expect("settings command should succeed")
+            .expect("settings command should return content");
+        assert!(result.contains("Settings (stub)"));
+    }
+
+    #[test]
+    fn settings_set_requires_key_and_value() {
+        let result = execute_slash_command("/settings set model");
+        assert!(result.is_err());
+        assert_eq!(
+            result.expect_err("should fail"),
+            "Usage: /settings set <key> <value>"
+        );
+    }
+
+    #[test]
+    fn settings_set_accepts_key_and_value() {
+        let result = execute_slash_command("/settings set model gemini-2.5-flash")
+            .expect("settings set should succeed")
+            .expect("settings set should return content");
+        assert!(result.contains("Setting updated: model=gemini-2.5-flash"));
     }
 
     #[test]
