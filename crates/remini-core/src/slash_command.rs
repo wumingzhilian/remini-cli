@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -47,6 +47,12 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                     "Unsupported /directory option: {other}. Use list, add <path>, or remove <path>."
                 )),
             }
+        }
+        "/copy" => {
+            let target = parts.next().unwrap_or("last");
+            Ok(Some(format!(
+                "Copied message {target} to clipboard (stub)."
+            )))
         }
         "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
@@ -262,6 +268,22 @@ mod tests {
             .expect("directory remove command should succeed")
             .expect("directory remove command should return content");
         assert!(result.contains("Removed directory: docs"));
+    }
+
+    #[test]
+    fn copy_command_defaults_to_last() {
+        let result = execute_slash_command("/copy")
+            .expect("copy command should succeed")
+            .expect("copy command should return content");
+        assert!(result.contains("Copied message last"));
+    }
+
+    #[test]
+    fn copy_command_accepts_message_id() {
+        let result = execute_slash_command("/copy 12")
+            .expect("copy command should succeed")
+            .expect("copy command should return content");
+        assert!(result.contains("Copied message 12"));
     }
 
     #[test]
