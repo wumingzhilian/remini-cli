@@ -63,7 +63,7 @@
 | CMD-025 | `/quit` | `packages/cli/src/ui/commands/quitCommand.ts` | P0 | In Progress |
 | CMD-026 | `/restore` | `packages/cli/src/ui/commands/restoreCommand.ts` | P1 | Not Started |
 | CMD-027 | `/rewind` | `packages/cli/src/ui/commands/rewindCommand.tsx` | P1 | Not Started |
-| CMD-028 | `/resume` | `packages/cli/src/ui/commands/resumeCommand.ts` | P1 | Not Started |
+| CMD-028 | `/resume` | `packages/cli/src/ui/commands/resumeCommand.ts` | P1 | In Progress |
 | CMD-029 | `/settings` | `packages/cli/src/ui/commands/settingsCommand.ts` | P1 | Not Started |
 | CMD-030 | `/shells` | `packages/cli/src/ui/commands/shellsCommand.ts` | P1 | Not Started |
 | CMD-031 | `/setup-github` | `packages/cli/src/ui/commands/setupGithubCommand.ts` | P2 | Not Started |

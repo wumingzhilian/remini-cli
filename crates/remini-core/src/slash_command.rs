@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/clear\n/commands\n/help\n/model [set <name>]\n/quit\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/clear\n/commands\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -18,6 +18,10 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         )),
         "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
+        "/resume" => {
+            let session = parts.next().unwrap_or("latest");
+            Ok(Some(format!("Resumed session: {session} (stub).")))
+        }
         "/help" | "/?" => Ok(Some(COMMAND_HELP_TEXT.to_string())),
         "/commands" => Ok(Some(COMMAND_HELP_TEXT.to_string())),
         "/model" => {
@@ -100,6 +104,7 @@ mod tests {
             .expect("commands command should return content");
         assert!(result.contains("Available commands"));
         assert!(result.contains("/model"));
+        assert!(result.contains("/resume"));
     }
 
     #[test]
@@ -149,6 +154,22 @@ mod tests {
             .expect("quit command should succeed")
             .expect("quit command should return content");
         assert!(result.contains("Session ended"));
+    }
+
+    #[test]
+    fn resume_command_defaults_to_latest() {
+        let result = execute_slash_command("/resume")
+            .expect("resume command should succeed")
+            .expect("resume command should return content");
+        assert!(result.contains("Resumed session: latest"));
+    }
+
+    #[test]
+    fn resume_command_accepts_session_id() {
+        let result = execute_slash_command("/resume 8")
+            .expect("resume command should succeed")
+            .expect("resume command should return content");
+        assert!(result.contains("Resumed session: 8"));
     }
 
     #[test]
