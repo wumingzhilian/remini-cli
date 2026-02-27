@@ -25,7 +25,7 @@
 | CLI-007 | `--sandbox/-s` 行为 | `docs/cli/sandbox.md` | P0 | Not Started |
 | CLI-008 | `--approval-mode` 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CLI-009 | `--yolo` 兼容行为 | `packages/cli/src/config/config.ts` | P1 | In Progress |
-| CLI-010 | `--resume/-r` 行为 | `packages/cli/src/config/config.ts` | P1 | Not Started |
+| CLI-010 | `--resume/-r` 行为 | `packages/cli/src/config/config.ts` | P1 | In Progress |
 | CLI-011 | `--include-directories` 行为 | `packages/cli/src/config/config.ts` | P1 | In Progress |
 | CLI-012 | `--output-format/-o` 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CLI-013 | `--help`/`--version` 行为 | `packages/cli/src/config/config.ts` | P0 | Done |

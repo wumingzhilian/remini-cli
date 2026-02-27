@@ -63,6 +63,15 @@ struct CliArgs {
     yolo: bool,
 
     #[arg(
+        short = 'r',
+        long = "resume",
+        num_args = 0..=1,
+        default_missing_value = "latest",
+        value_name = "SESSION"
+    )]
+    resume: Option<String>,
+
+    #[arg(
         long = "include-directories",
         value_name = "DIR",
         action = clap::ArgAction::Append,
@@ -79,6 +88,16 @@ fn normalize_include_directories(raw: Vec<String>) -> Vec<String> {
         .map(|item| item.trim().to_string())
         .filter(|item| !item.is_empty())
         .collect()
+}
+
+fn normalize_resume(raw: Option<String>) -> Option<String> {
+    raw.map(|value| value.trim().to_string()).and_then(|value| {
+        if value.is_empty() {
+            Some("latest".to_string())
+        } else {
+            Some(value)
+        }
+    })
 }
 
 fn json_escape(value: &str) -> String {
@@ -152,6 +171,7 @@ fn main() -> ExitCode {
     let args = CliArgs::parse();
     let output_format = args.output_format.map(OutputFormat::from);
     let include_directories = normalize_include_directories(args.include_directories.clone());
+    let resume = normalize_resume(args.resume.clone());
 
     if args.prompt.is_some() && !args.query.is_empty() {
         return return_with_error(
@@ -218,6 +238,7 @@ fn main() -> ExitCode {
     let request = RunRequest {
         query: normalize_query(&args.query),
         model: args.model,
+        resume,
         include_directories,
         prompt: args.prompt,
         prompt_interactive: args.prompt_interactive,
@@ -232,6 +253,9 @@ fn main() -> ExitCode {
 
     match mode {
         RunMode::Interactive => {
+            if let Some(session) = request.resume.as_deref() {
+                println!("Resuming session: {session} (stub)");
+            }
             println!(
                 "remini interactive mode bootstrap complete (Phase 1 skeleton, approval-mode={}).",
                 effective_settings.approval_mode.as_str()
@@ -354,5 +378,38 @@ mod tests {
             "   ".to_string(),
         ]);
         assert_eq!(dirs, vec!["./one".to_string(), "two".to_string()]);
+    }
+
+    #[test]
+    fn normalize_resume_defaults_empty_to_latest() {
+        assert_eq!(
+            normalize_resume(Some("".to_string())),
+            Some("latest".to_string())
+        );
+        assert_eq!(
+            normalize_resume(Some("   ".to_string())),
+            Some("latest".to_string())
+        );
+    }
+
+    #[test]
+    fn normalize_resume_keeps_explicit_value() {
+        assert_eq!(
+            normalize_resume(Some("5".to_string())),
+            Some("5".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_resume_without_value_defaults_to_latest() {
+        let args = CliArgs::try_parse_from(["remini", "--resume"]).expect("parse should succeed");
+        assert_eq!(args.resume.as_deref(), Some("latest"));
+    }
+
+    #[test]
+    fn parse_resume_with_explicit_value() {
+        let args = CliArgs::try_parse_from(["remini", "--resume", "session-42"])
+            .expect("parse should succeed");
+        assert_eq!(args.resume.as_deref(), Some("session-42"));
     }
 }
