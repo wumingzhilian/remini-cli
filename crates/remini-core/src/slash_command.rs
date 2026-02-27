@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/terminal-setup [check|install]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/terminal-setup [check|install]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n/vim [status|on|off]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -137,6 +137,21 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )),
             }
         }
+        "/vim" => {
+            let action = parts.next().unwrap_or("status");
+            match action {
+                "status" => Ok(Some("Vim mode (stub): off.".to_string())),
+                "on" => Ok(Some(
+                    "Vim mode enabled for current session (stub).".to_string(),
+                )),
+                "off" => Ok(Some(
+                    "Vim mode disabled for current session (stub).".to_string(),
+                )),
+                other => Err(format!(
+                    "Unsupported /vim option: {other}. Use status, on, or off."
+                )),
+            }
+        }
         "/init" => Ok(Some(
             "Init (stub): generated starter files guidance for remini-cli in current workspace."
                 .to_string(),
@@ -264,6 +279,7 @@ mod tests {
         assert!(result.contains("/privacy"));
         assert!(result.contains("/terminal-setup"));
         assert!(result.contains("/theme"));
+        assert!(result.contains("/vim"));
     }
 
     #[test]
@@ -513,6 +529,26 @@ mod tests {
             .expect("terminal-setup install should succeed")
             .expect("terminal-setup install should return content");
         assert!(result.contains("install requested"));
+    }
+
+    #[test]
+    fn vim_command_defaults_to_status() {
+        let result = execute_slash_command("/vim")
+            .expect("vim should succeed")
+            .expect("vim should return content");
+        assert!(result.contains("Vim mode"));
+    }
+
+    #[test]
+    fn vim_mode_on_and_off_work() {
+        let enabled = execute_slash_command("/vim on")
+            .expect("vim on should succeed")
+            .expect("vim on should return content");
+        let disabled = execute_slash_command("/vim off")
+            .expect("vim off should succeed")
+            .expect("vim off should return content");
+        assert!(enabled.contains("enabled"));
+        assert!(disabled.contains("disabled"));
     }
 
     #[test]
