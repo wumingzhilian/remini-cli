@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/terminal-setup [check|install]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n/vim [status|on|off]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/permissions [status|set <mode>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/terminal-setup [check|install]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n/vim [status|on|off]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -152,6 +152,26 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )),
             }
         }
+        "/permissions" => {
+            let action = parts.next().unwrap_or("status");
+            match action {
+                "status" => Ok(Some(
+                    "Permissions (stub): approval-mode=default, sandbox=false".to_string(),
+                )),
+                "set" => {
+                    if let Some(mode) = parts.next() {
+                        Ok(Some(format!(
+                            "Permissions mode set to {mode} (session-only stub)."
+                        )))
+                    } else {
+                        Err("Usage: /permissions set <mode>".to_string())
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /permissions option: {other}. Use status or set <mode>."
+                )),
+            }
+        }
         "/init" => Ok(Some(
             "Init (stub): generated starter files guidance for remini-cli in current workspace."
                 .to_string(),
@@ -277,6 +297,7 @@ mod tests {
         assert!(result.contains("/ide"));
         assert!(result.contains("/init"));
         assert!(result.contains("/privacy"));
+        assert!(result.contains("/permissions"));
         assert!(result.contains("/terminal-setup"));
         assert!(result.contains("/theme"));
         assert!(result.contains("/vim"));
@@ -549,6 +570,32 @@ mod tests {
             .expect("vim off should return content");
         assert!(enabled.contains("enabled"));
         assert!(disabled.contains("disabled"));
+    }
+
+    #[test]
+    fn permissions_command_defaults_to_status() {
+        let result = execute_slash_command("/permissions")
+            .expect("permissions should succeed")
+            .expect("permissions should return content");
+        assert!(result.contains("Permissions (stub)"));
+    }
+
+    #[test]
+    fn permissions_set_requires_mode() {
+        let result = execute_slash_command("/permissions set");
+        assert!(result.is_err());
+        assert_eq!(
+            result.expect_err("should fail"),
+            "Usage: /permissions set <mode>"
+        );
+    }
+
+    #[test]
+    fn permissions_set_accepts_mode() {
+        let result = execute_slash_command("/permissions set yolo")
+            .expect("permissions set should succeed")
+            .expect("permissions set should return content");
+        assert!(result.contains("Permissions mode set to yolo"));
     }
 
     #[test]
