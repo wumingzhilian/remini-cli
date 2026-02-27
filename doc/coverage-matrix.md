@@ -59,7 +59,7 @@
 | CMD-021 | `/permissions` | `packages/cli/src/ui/commands/permissionsCommand.ts` | P1 | Not Started |
 | CMD-022 | `/plan` | `packages/cli/src/ui/commands/planCommand.ts` | P1 | Not Started |
 | CMD-023 | `/policies` | `packages/cli/src/ui/commands/policiesCommand.ts` | P1 | Not Started |
-| CMD-024 | `/privacy` | `packages/cli/src/ui/commands/privacyCommand.ts` | P2 | Not Started |
+| CMD-024 | `/privacy` | `packages/cli/src/ui/commands/privacyCommand.ts` | P2 | In Progress |
 | CMD-025 | `/quit` | `packages/cli/src/ui/commands/quitCommand.ts` | P0 | In Progress |
 | CMD-026 | `/restore` | `packages/cli/src/ui/commands/restoreCommand.ts` | P1 | Not Started |
 | CMD-027 | `/rewind` | `packages/cli/src/ui/commands/rewindCommand.tsx` | P1 | Not Started |

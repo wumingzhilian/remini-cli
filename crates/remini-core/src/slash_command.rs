@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/help\n/init\n/model [set <name>]\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/help\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -71,6 +71,10 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         )),
         "/init" => Ok(Some(
             "Init (stub): generated starter files guidance for remini-cli in current workspace."
+                .to_string(),
+        )),
+        "/privacy" => Ok(Some(
+            "Privacy (stub): review telemetry, data retention, and output safety settings."
                 .to_string(),
         )),
         "/settings" => {
@@ -187,6 +191,7 @@ mod tests {
         assert!(result.contains("/compress"));
         assert!(result.contains("/docs"));
         assert!(result.contains("/init"));
+        assert!(result.contains("/privacy"));
     }
 
     #[test]
@@ -359,6 +364,14 @@ mod tests {
             .expect("init command should succeed")
             .expect("init command should return content");
         assert!(result.contains("Init (stub)"));
+    }
+
+    #[test]
+    fn privacy_command_returns_policy_hint() {
+        let result = execute_slash_command("/privacy")
+            .expect("privacy command should succeed")
+            .expect("privacy command should return content");
+        assert!(result.contains("Privacy (stub)"));
     }
 
     #[test]
