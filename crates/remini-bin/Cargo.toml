@@ -1,0 +1,13 @@
+[package]
+name = "remini-bin"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+clap.workspace = true
+remini-core = { path = "../remini-core" }
+
+[[bin]]
+name = "remini"
+path = "src/main.rs"

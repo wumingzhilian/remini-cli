@@ -16,11 +16,11 @@
 
 | ID | 能力 | 基线参考 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- |
-| CLI-001 | 交互模式启动（TTY） | `packages/cli/src/config/config.ts` | P0 | Not Started |
-| CLI-002 | 非交互模式启动（headless） | `docs/cli/headless.md` | P0 | Not Started |
-| CLI-003 | `--prompt/-p` 行为 | `packages/cli/src/config/config.ts` | P0 | Not Started |
-| CLI-004 | `--prompt-interactive/-i` 行为 | `packages/cli/src/config/config.ts` | P0 | Not Started |
-| CLI-005 | positional query 行为 | `packages/cli/src/config/config.ts` | P0 | Not Started |
+| CLI-001 | 交互模式启动（TTY） | `packages/cli/src/config/config.ts` | P0 | In Progress |
+| CLI-002 | 非交互模式启动（headless） | `docs/cli/headless.md` | P0 | In Progress |
+| CLI-003 | `--prompt/-p` 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
+| CLI-004 | `--prompt-interactive/-i` 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
+| CLI-005 | positional query 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CLI-006 | `--model/-m` 行为 | `docs/cli/cli-reference.md` | P1 | Not Started |
 | CLI-007 | `--sandbox/-s` 行为 | `docs/cli/sandbox.md` | P0 | Not Started |
 | CLI-008 | `--approval-mode` 行为 | `packages/cli/src/config/config.ts` | P0 | Not Started |
@@ -28,7 +28,7 @@
 | CLI-010 | `--resume/-r` 行为 | `packages/cli/src/config/config.ts` | P1 | Not Started |
 | CLI-011 | `--include-directories` 行为 | `packages/cli/src/config/config.ts` | P1 | Not Started |
 | CLI-012 | `--output-format/-o` 行为 | `packages/cli/src/config/config.ts` | P0 | Not Started |
-| CLI-013 | `--help`/`--version` 行为 | `packages/cli/src/config/config.ts` | P0 | Not Started |
+| CLI-013 | `--help`/`--version` 行为 | `packages/cli/src/config/config.ts` | P0 | Done |
 | CLI-014 | `--debug` 与 debug 日志 | `packages/cli/src/config/config.ts` | P1 | Not Started |
 | CLI-015 | 返回码对齐（0/1/42/53） | `docs/cli/headless.md` | P0 | Not Started |
 
@@ -169,7 +169,7 @@
 
 | ID | 能力 | 基线参考 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- |
-| QA-001 | Unit 测试框架（Rust） | `packages/*/*.test.ts` | P0 | Not Started |
+| QA-001 | Unit 测试框架（Rust） | `packages/*/*.test.ts` | P0 | In Progress |
 | QA-002 | Integration 测试框架（Rust） | `integration-tests/*` | P0 | Not Started |
 | QA-003 | JSON 输出回归测试 | `integration-tests/json-output.test.ts` | P0 | Not Started |
 | QA-004 | 文件系统工具链回归测试 | `integration-tests/file-system*.test.ts` | P0 | Not Started |
