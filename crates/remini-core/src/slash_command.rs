@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -19,6 +19,35 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         "/bug" => Ok(Some(
             "Bug report (stub): please open an issue with steps to reproduce and logs.".to_string(),
         )),
+        "/directory" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some(
+                    "Directory context (stub):\n- . (workspace root)".to_string(),
+                )),
+                "add" => {
+                    if let Some(path) = parts.next() {
+                        Ok(Some(format!(
+                            "Added directory: {path} (session-only stub). Use --include-directories on startup for persistent include paths."
+                        )))
+                    } else {
+                        Err("Usage: /directory add <path>".to_string())
+                    }
+                }
+                "remove" => {
+                    if let Some(path) = parts.next() {
+                        Ok(Some(format!(
+                            "Removed directory: {path} (session-only stub)."
+                        )))
+                    } else {
+                        Err("Usage: /directory remove <path>".to_string())
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /directory option: {other}. Use list, add <path>, or remove <path>."
+                )),
+            }
+        }
         "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
         "/resume" => {
@@ -108,6 +137,7 @@ mod tests {
         assert!(result.contains("Available commands"));
         assert!(result.contains("/model"));
         assert!(result.contains("/resume"));
+        assert!(result.contains("/directory"));
     }
 
     #[test]
@@ -198,6 +228,40 @@ mod tests {
             .expect("clear command should succeed")
             .expect("clear command should return content");
         assert!(result.contains("Screen cleared"));
+    }
+
+    #[test]
+    fn directory_command_defaults_to_list() {
+        let result = execute_slash_command("/directory")
+            .expect("directory command should succeed")
+            .expect("directory command should return content");
+        assert!(result.contains("Directory context"));
+    }
+
+    #[test]
+    fn directory_add_requires_path() {
+        let result = execute_slash_command("/directory add");
+        assert!(result.is_err());
+        assert_eq!(
+            result.expect_err("should fail"),
+            "Usage: /directory add <path>"
+        );
+    }
+
+    #[test]
+    fn directory_add_accepts_path() {
+        let result = execute_slash_command("/directory add docs")
+            .expect("directory add command should succeed")
+            .expect("directory add command should return content");
+        assert!(result.contains("Added directory: docs"));
+    }
+
+    #[test]
+    fn directory_remove_accepts_path() {
+        let result = execute_slash_command("/directory remove docs")
+            .expect("directory remove command should succeed")
+            .expect("directory remove command should return content");
+        assert!(result.contains("Removed directory: docs"));
     }
 
     #[test]
