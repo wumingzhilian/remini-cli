@@ -46,7 +46,7 @@
 | CMD-008 | `/compress` | `packages/cli/src/ui/commands/compressCommand.ts` | P1 | In Progress |
 | CMD-009 | `/copy` | `packages/cli/src/ui/commands/copyCommand.ts` | P1 | In Progress |
 | CMD-010 | `/directory` | `packages/cli/src/ui/commands/directoryCommand.tsx` | P1 | In Progress |
-| CMD-011 | `/docs` | `packages/cli/src/ui/commands/docsCommand.ts` | P2 | Not Started |
+| CMD-011 | `/docs` | `packages/cli/src/ui/commands/docsCommand.ts` | P2 | In Progress |
 | CMD-012 | `/editor` | `packages/cli/src/ui/commands/editorCommand.ts` | P2 | Not Started |
 | CMD-013 | `/extensions` | `packages/cli/src/ui/commands/extensionsCommand.ts` | P0 | Not Started |
 | CMD-014 | `/help` | `packages/cli/src/ui/commands/helpCommand.ts` | P0 | In Progress |

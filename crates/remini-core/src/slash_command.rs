@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -66,6 +66,9 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )))
             }
         }
+        "/docs" => Ok(Some(
+            "Docs (stub): visit https://github.com/wumingzhilian/remini-cli#readme".to_string(),
+        )),
         "/settings" => {
             let action = parts.next().unwrap_or("show");
             match action {
@@ -178,6 +181,7 @@ mod tests {
         assert!(result.contains("/resume"));
         assert!(result.contains("/directory"));
         assert!(result.contains("/compress"));
+        assert!(result.contains("/docs"));
     }
 
     #[test]
@@ -334,6 +338,14 @@ mod tests {
             .expect("compress command should succeed")
             .expect("compress command should return content");
         assert!(result.contains("keep key decisions"));
+    }
+
+    #[test]
+    fn docs_command_returns_link_hint() {
+        let result = execute_slash_command("/docs")
+            .expect("docs command should succeed")
+            .expect("docs command should return content");
+        assert!(result.contains("Docs (stub)"));
     }
 
     #[test]
