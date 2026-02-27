@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -53,6 +53,18 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
             Ok(Some(format!(
                 "Copied message {target} to clipboard (stub)."
             )))
+        }
+        "/compress" => {
+            let note = parts.collect::<Vec<_>>().join(" ");
+            if note.is_empty() {
+                Ok(Some(
+                    "Compression complete (stub): summarized current conversation.".to_string(),
+                ))
+            } else {
+                Ok(Some(format!(
+                    "Compression complete (stub): summarized current conversation with note: {note}"
+                )))
+            }
         }
         "/settings" => {
             let action = parts.next().unwrap_or("show");
@@ -165,6 +177,7 @@ mod tests {
         assert!(result.contains("/model"));
         assert!(result.contains("/resume"));
         assert!(result.contains("/directory"));
+        assert!(result.contains("/compress"));
     }
 
     #[test]
@@ -305,6 +318,22 @@ mod tests {
             .expect("copy command should succeed")
             .expect("copy command should return content");
         assert!(result.contains("Copied message 12"));
+    }
+
+    #[test]
+    fn compress_command_defaults_to_summary() {
+        let result = execute_slash_command("/compress")
+            .expect("compress command should succeed")
+            .expect("compress command should return content");
+        assert!(result.contains("Compression complete"));
+    }
+
+    #[test]
+    fn compress_command_accepts_note() {
+        let result = execute_slash_command("/compress keep key decisions")
+            .expect("compress command should succeed")
+            .expect("compress command should return content");
+        assert!(result.contains("keep key decisions"));
     }
 
     #[test]
