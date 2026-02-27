@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/help\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -69,6 +69,24 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         "/docs" => Ok(Some(
             "Docs (stub): visit https://github.com/wumingzhilian/remini-cli#readme".to_string(),
         )),
+        "/editor" => {
+            let action = parts.next().unwrap_or("status");
+            match action {
+                "status" => Ok(Some(
+                    "Editor (stub): no active editor bridge connected.".to_string(),
+                )),
+                "open" => {
+                    if let Some(path) = parts.next() {
+                        Ok(Some(format!("Editor open request: {path} (stub).")))
+                    } else {
+                        Err("Usage: /editor open <path>".to_string())
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /editor option: {other}. Use status or open <path>."
+                )),
+            }
+        }
         "/init" => Ok(Some(
             "Init (stub): generated starter files guidance for remini-cli in current workspace."
                 .to_string(),
@@ -190,6 +208,7 @@ mod tests {
         assert!(result.contains("/directory"));
         assert!(result.contains("/compress"));
         assert!(result.contains("/docs"));
+        assert!(result.contains("/editor"));
         assert!(result.contains("/init"));
         assert!(result.contains("/privacy"));
     }
@@ -356,6 +375,32 @@ mod tests {
             .expect("docs command should succeed")
             .expect("docs command should return content");
         assert!(result.contains("Docs (stub)"));
+    }
+
+    #[test]
+    fn editor_command_defaults_to_status() {
+        let result = execute_slash_command("/editor")
+            .expect("editor command should succeed")
+            .expect("editor command should return content");
+        assert!(result.contains("Editor (stub)"));
+    }
+
+    #[test]
+    fn editor_open_requires_path() {
+        let result = execute_slash_command("/editor open");
+        assert!(result.is_err());
+        assert_eq!(
+            result.expect_err("should fail"),
+            "Usage: /editor open <path>"
+        );
+    }
+
+    #[test]
+    fn editor_open_accepts_path() {
+        let result = execute_slash_command("/editor open src/main.rs")
+            .expect("editor open should succeed")
+            .expect("editor open should return content");
+        assert!(result.contains("src/main.rs"));
     }
 
     #[test]
