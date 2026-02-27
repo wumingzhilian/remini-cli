@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/clear\n/commands\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/help\n/model [set <name>]\n/quit\n/resume [session|latest]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -15,6 +15,9 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         ))),
         "/auth" => Ok(Some(
             "Auth methods (stub):\n- Login with Google\n- GEMINI_API_KEY\n- Vertex AI".to_string(),
+        )),
+        "/bug" => Ok(Some(
+            "Bug report (stub): please open an issue with steps to reproduce and logs.".to_string(),
         )),
         "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
@@ -179,6 +182,14 @@ mod tests {
             .expect("auth command should return content");
         assert!(result.contains("Login with Google"));
         assert!(result.contains("GEMINI_API_KEY"));
+    }
+
+    #[test]
+    fn bug_command_returns_report_hint() {
+        let result = execute_slash_command("/bug")
+            .expect("bug command should succeed")
+            .expect("bug command should return content");
+        assert!(result.contains("Bug report"));
     }
 
     #[test]
