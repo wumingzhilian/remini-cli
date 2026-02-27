@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -84,6 +84,21 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 }
                 other => Err(format!(
                     "Unsupported /editor option: {other}. Use status or open <path>."
+                )),
+            }
+        }
+        "/ide" => {
+            let action = parts.next().unwrap_or("status");
+            match action {
+                "status" => Ok(Some("IDE companion (stub): disabled.".to_string())),
+                "enable" => Ok(Some(
+                    "IDE companion enabled for current session (stub).".to_string(),
+                )),
+                "disable" => Ok(Some(
+                    "IDE companion disabled for current session (stub).".to_string(),
+                )),
+                other => Err(format!(
+                    "Unsupported /ide option: {other}. Use status, enable, or disable."
                 )),
             }
         }
@@ -209,6 +224,7 @@ mod tests {
         assert!(result.contains("/compress"));
         assert!(result.contains("/docs"));
         assert!(result.contains("/editor"));
+        assert!(result.contains("/ide"));
         assert!(result.contains("/init"));
         assert!(result.contains("/privacy"));
     }
@@ -401,6 +417,26 @@ mod tests {
             .expect("editor open should succeed")
             .expect("editor open should return content");
         assert!(result.contains("src/main.rs"));
+    }
+
+    #[test]
+    fn ide_command_defaults_to_status() {
+        let result = execute_slash_command("/ide")
+            .expect("ide command should succeed")
+            .expect("ide command should return content");
+        assert!(result.contains("IDE companion"));
+    }
+
+    #[test]
+    fn ide_enable_and_disable_work() {
+        let enabled = execute_slash_command("/ide enable")
+            .expect("ide enable should succeed")
+            .expect("ide enable should return content");
+        let disabled = execute_slash_command("/ide disable")
+            .expect("ide disable should succeed")
+            .expect("ide disable should return content");
+        assert!(enabled.contains("enabled"));
+        assert!(disabled.contains("disabled"));
     }
 
     #[test]
