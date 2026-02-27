@@ -6,6 +6,7 @@ license.workspace = true
 
 [dependencies]
 clap.workspace = true
+remini-config = { path = "../remini-config" }
 remini-core = { path = "../remini-core" }
 
 [[bin]]

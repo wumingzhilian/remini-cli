@@ -2,6 +2,7 @@ use std::io::IsTerminal;
 use std::process::ExitCode;
 
 use clap::{Parser, ValueEnum};
+use remini_config::{resolve_settings, ApprovalMode, CliOverrides, Settings};
 use remini_core::{
     decide_run_mode, normalize_query, startup_notice, OutputFormat, RunMode, RunRequest,
 };
@@ -66,6 +67,30 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     }
 
+    let approval_mode = if let Some(raw_mode) = args.approval_mode.as_deref() {
+        match ApprovalMode::parse(raw_mode) {
+            Some(mode) => Some(mode),
+            None => {
+                eprintln!(
+                    "Invalid approval mode: {raw_mode}. Valid values are: {}",
+                    ApprovalMode::ALLOWED_VALUES.join(", ")
+                );
+                return ExitCode::from(1);
+            }
+        }
+    } else {
+        None
+    };
+
+    let base_settings = Settings::default();
+    let effective_settings = resolve_settings(
+        &base_settings,
+        &CliOverrides {
+            approval_mode,
+            sandbox_enabled: if args.sandbox { Some(true) } else { None },
+        },
+    );
+
     let request = RunRequest {
         query: normalize_query(&args.query),
         prompt: args.prompt,
@@ -81,7 +106,10 @@ fn main() -> ExitCode {
 
     match mode {
         RunMode::Interactive => {
-            println!("remini interactive mode bootstrap complete (Phase 1 skeleton).");
+            println!(
+                "remini interactive mode bootstrap complete (Phase 1 skeleton, approval-mode={}).",
+                effective_settings.approval_mode.as_str()
+            );
             ExitCode::SUCCESS
         }
         RunMode::Headless => {

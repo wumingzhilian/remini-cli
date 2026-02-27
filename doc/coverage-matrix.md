@@ -23,7 +23,7 @@
 | CLI-005 | positional query 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CLI-006 | `--model/-m` 行为 | `docs/cli/cli-reference.md` | P1 | Not Started |
 | CLI-007 | `--sandbox/-s` 行为 | `docs/cli/sandbox.md` | P0 | Not Started |
-| CLI-008 | `--approval-mode` 行为 | `packages/cli/src/config/config.ts` | P0 | Not Started |
+| CLI-008 | `--approval-mode` 行为 | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CLI-009 | `--yolo` 兼容行为 | `packages/cli/src/config/config.ts` | P1 | Not Started |
 | CLI-010 | `--resume/-r` 行为 | `packages/cli/src/config/config.ts` | P1 | Not Started |
 | CLI-011 | `--include-directories` 行为 | `packages/cli/src/config/config.ts` | P1 | Not Started |
@@ -114,7 +114,7 @@
 | CFG-002 | schema 默认值与校验 | `schemas/settings.schema.json` | P0 | Not Started |
 | CFG-003 | env 变量展开 | `packages/cli/src/config/settings.ts` | P1 | Not Started |
 | CFG-004 | trusted folders | `packages/cli/src/config/trustedFolders.ts` | P0 | Not Started |
-| CFG-005 | approval mode（default/auto_edit/plan/yolo） | `packages/cli/src/config/config.ts` | P0 | Not Started |
+| CFG-005 | approval mode（default/auto_edit/plan/yolo） | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CFG-006 | policy paths 加载 | `docs/reference/policy-engine.md` | P1 | Not Started |
 | CFG-007 | Policy Tier & Priority | `docs/reference/policy-engine.md` | P0 | Not Started |
 | CFG-008 | argsPattern / commandPrefix 匹配 | `docs/reference/policy-engine.md` | P1 | Not Started |

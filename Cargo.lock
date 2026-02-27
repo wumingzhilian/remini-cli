@@ -139,8 +139,13 @@ name = "remini-bin"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "remini-config",
  "remini-core",
 ]
+
+[[package]]
+name = "remini-config"
+version = "0.1.0"
 
 [[package]]
 name = "remini-core"
