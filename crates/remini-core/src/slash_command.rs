@@ -1,4 +1,4 @@
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/terminal-setup [check|install]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -119,6 +119,21 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 }
                 other => Err(format!(
                     "Unsupported /theme option: {other}. Use list or set <name>."
+                )),
+            }
+        }
+        "/terminal-setup" => {
+            let action = parts.next().unwrap_or("check");
+            match action {
+                "check" => Ok(Some(
+                    "Terminal setup (stub): shell integration status unknown.".to_string(),
+                )),
+                "install" => Ok(Some(
+                    "Terminal setup install requested (stub): follow shell instructions."
+                        .to_string(),
+                )),
+                other => Err(format!(
+                    "Unsupported /terminal-setup option: {other}. Use check or install."
                 )),
             }
         }
@@ -247,6 +262,7 @@ mod tests {
         assert!(result.contains("/ide"));
         assert!(result.contains("/init"));
         assert!(result.contains("/privacy"));
+        assert!(result.contains("/terminal-setup"));
         assert!(result.contains("/theme"));
     }
 
@@ -481,6 +497,22 @@ mod tests {
             .expect("theme set should succeed")
             .expect("theme set should return content");
         assert!(result.contains("Theme set to dark"));
+    }
+
+    #[test]
+    fn terminal_setup_defaults_to_check() {
+        let result = execute_slash_command("/terminal-setup")
+            .expect("terminal-setup should succeed")
+            .expect("terminal-setup should return content");
+        assert!(result.contains("Terminal setup (stub)"));
+    }
+
+    #[test]
+    fn terminal_setup_install_is_supported() {
+        let result = execute_slash_command("/terminal-setup install")
+            .expect("terminal-setup install should succeed")
+            .expect("terminal-setup install should return content");
+        assert!(result.contains("install requested"));
     }
 
     #[test]
