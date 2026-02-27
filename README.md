@@ -15,6 +15,7 @@ Rust 重写版 `gemini-cli` 项目。
    - 交互/非交互模式判断
    - `--model`（headless 输出中携带 model 字段）
    - `--approval-mode`
+   - `--debug/-d`（支持 `DEBUG=true|1` / `DEBUG_MODE=true|1`）
    - `--resume/-r`（支持 `--resume` 默认恢复 `latest`）
    - `--include-directories`（支持逗号分隔与多次传入，用于 `@path` 查找附加目录）
    - settings 最小加载（`~/.gemini/settings.json` 与 `<workspace>/.gemini/settings.json`，workspace 优先）
@@ -54,6 +55,9 @@ cargo run -p remini-bin -- -m gemini-2.5-flash -p "/tools" -o json
 
 # 交互模式恢复会话（--resume 无值等价 latest）
 cargo run -p remini-bin -- --resume
+
+# 开启 debug（stderr 会输出 debug 模式提示）
+cargo run -p remini-bin -- --debug -i "hello"
 
 # Stream JSON 输出
 cargo run -p remini-bin -- -p "/tools desc" -o stream-json

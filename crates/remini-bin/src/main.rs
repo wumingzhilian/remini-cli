@@ -1,3 +1,4 @@
+use std::env;
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -56,6 +57,9 @@ struct CliArgs {
     #[arg(short = 's', long = "sandbox", default_value_t = false)]
     sandbox: bool,
 
+    #[arg(short = 'd', long = "debug", default_value_t = false)]
+    debug: bool,
+
     #[arg(long = "approval-mode")]
     approval_mode: Option<String>,
 
@@ -98,6 +102,19 @@ fn normalize_resume(raw: Option<String>) -> Option<String> {
             Some(value)
         }
     })
+}
+
+fn env_debug_truthy(raw: Option<&str>) -> bool {
+    matches!(raw, Some("true" | "1"))
+}
+
+fn is_debug_mode(args_debug: bool) -> bool {
+    if args_debug {
+        return true;
+    }
+
+    env_debug_truthy(env::var("DEBUG").ok().as_deref())
+        || env_debug_truthy(env::var("DEBUG_MODE").ok().as_deref())
 }
 
 fn json_escape(value: &str) -> String {
@@ -172,6 +189,7 @@ fn main() -> ExitCode {
     let output_format = args.output_format.map(OutputFormat::from);
     let include_directories = normalize_include_directories(args.include_directories.clone());
     let resume = normalize_resume(args.resume.clone());
+    let debug_mode = is_debug_mode(args.debug);
 
     if args.prompt.is_some() && !args.query.is_empty() {
         return return_with_error(
@@ -249,6 +267,9 @@ fn main() -> ExitCode {
 
     if let Some(message) = startup_notice(&request, stdin_is_tty) {
         eprintln!("{message}");
+    }
+    if debug_mode {
+        eprintln!("Debug mode enabled (stub).");
     }
 
     match mode {
@@ -411,5 +432,19 @@ mod tests {
         let args = CliArgs::try_parse_from(["remini", "--resume", "session-42"])
             .expect("parse should succeed");
         assert_eq!(args.resume.as_deref(), Some("session-42"));
+    }
+
+    #[test]
+    fn env_debug_truthy_handles_known_values() {
+        assert!(env_debug_truthy(Some("true")));
+        assert!(env_debug_truthy(Some("1")));
+        assert!(!env_debug_truthy(Some("false")));
+        assert!(!env_debug_truthy(Some("0")));
+        assert!(!env_debug_truthy(None));
+    }
+
+    #[test]
+    fn is_debug_mode_true_when_cli_flag_is_true() {
+        assert!(is_debug_mode(true));
     }
 }
