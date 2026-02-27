@@ -42,7 +42,7 @@
 | CMD-004 | `/bug` | `packages/cli/src/ui/commands/bugCommand.ts` | P1 | Not Started |
 | CMD-005 | `/chat` + 子命令 | `packages/cli/src/ui/commands/chatCommand.ts` | P0 | Not Started |
 | CMD-006 | `/clear` | `packages/cli/src/ui/commands/clearCommand.ts` | P1 | In Progress |
-| CMD-007 | `/commands` | `packages/cli/src/ui/commands/commandsCommand.ts` | P1 | Not Started |
+| CMD-007 | `/commands` | `packages/cli/src/ui/commands/commandsCommand.ts` | P1 | In Progress |
 | CMD-008 | `/compress` | `packages/cli/src/ui/commands/compressCommand.ts` | P1 | Not Started |
 | CMD-009 | `/copy` | `packages/cli/src/ui/commands/copyCommand.ts` | P1 | Not Started |
 | CMD-010 | `/directory` | `packages/cli/src/ui/commands/directoryCommand.tsx` | P1 | Not Started |
