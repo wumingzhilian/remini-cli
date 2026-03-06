@@ -1,3 +1,5 @@
+use crate::tool_registry::format_tool_list;
+
 const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/permissions [status|set <mode>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/terminal-setup [check|install]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n/vim [status|on|off]\n@<path>\n!<command>";
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
@@ -230,12 +232,8 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         "/tools" => {
             let mode = parts.next().unwrap_or("nodesc");
             match mode {
-                "desc" | "descriptions" => Ok(Some(
-                    "Available tools:\nlist_directory - list files and directories\nread_file - read text content from a file\nglob - match files by wildcard pattern\ngrep_search - search text within files".to_string(),
-                )),
-                "nodesc" | "nodescriptions" => Ok(Some(
-                    "Available tools:\nlist_directory\nread_file\nglob\ngrep_search".to_string(),
-                )),
+                "desc" | "descriptions" => Ok(Some(format_tool_list(true))),
+                "nodesc" | "nodescriptions" => Ok(Some(format_tool_list(false))),
                 other => Err(format!(
                     "Unsupported /tools option: {other}. Use desc or nodesc."
                 )),

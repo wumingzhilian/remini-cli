@@ -6,6 +6,12 @@ use remini_tools::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ToolDescriptor {
+    pub name: &'static str,
+    pub description: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolRequest {
     ReadFile { path: PathBuf },
     ReadManyFiles { path: PathBuf, max_files: usize },
@@ -21,6 +27,46 @@ pub enum ToolResponse {
     ListDirectory(Vec<DirectoryEntry>),
     GlobSearch(Vec<PathBuf>),
     GrepSearch(Vec<GrepMatch>),
+}
+
+pub fn builtin_tool_descriptors() -> &'static [ToolDescriptor] {
+    &[
+        ToolDescriptor {
+            name: "glob",
+            description: "match files by wildcard pattern",
+        },
+        ToolDescriptor {
+            name: "grep_search",
+            description: "search text within files",
+        },
+        ToolDescriptor {
+            name: "list_directory",
+            description: "list files and directories",
+        },
+        ToolDescriptor {
+            name: "read_file",
+            description: "read text content from a file",
+        },
+        ToolDescriptor {
+            name: "read_many_files",
+            description: "read text content from many files",
+        },
+    ]
+}
+
+pub fn format_tool_list(include_descriptions: bool) -> String {
+    let body = builtin_tool_descriptors()
+        .iter()
+        .map(|tool| {
+            if include_descriptions {
+                format!("{} - {}", tool.name, tool.description)
+            } else {
+                tool.name.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    format!("Available tools:\n{body}")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -163,5 +209,23 @@ mod tests {
         let err = result.expect_err("expected read_file error");
         assert_eq!(err.kind, ToolErrorKind::NotFound);
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn descriptors_include_read_only_tools() {
+        let names = builtin_tool_descriptors()
+            .iter()
+            .map(|tool| tool.name)
+            .collect::<Vec<_>>();
+        assert!(names.contains(&"read_file"));
+        assert!(names.contains(&"read_many_files"));
+        assert!(names.contains(&"grep_search"));
+    }
+
+    #[test]
+    fn format_tool_list_can_include_descriptions() {
+        let output = format_tool_list(true);
+        assert!(output.contains("Available tools"));
+        assert!(output.contains("read_file - read text content"));
     }
 }
