@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use remini_tools::{
-    glob_search, grep_search, list_directory, read_file, read_many_files, DirectoryEntry,
-    FileContent, GrepMatch, ToolError,
+    glob_search, grep_search, list_directory, read_file, read_many_files, write_file,
+    DirectoryEntry, FileContent, GrepMatch, ToolError, WriteFileResult,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,6 +15,7 @@ pub struct ToolDescriptor {
 pub enum ToolRequest {
     ReadFile { path: PathBuf },
     ReadManyFiles { path: PathBuf, max_files: usize },
+    WriteFile { path: PathBuf, content: String },
     ListDirectory { path: PathBuf },
     GlobSearch { root: PathBuf, pattern: String },
     GrepSearch { root: PathBuf, query: String },
@@ -24,6 +25,7 @@ pub enum ToolRequest {
 pub enum ToolResponse {
     ReadFile(String),
     ReadManyFiles(Vec<FileContent>),
+    WriteFile(WriteFileResult),
     ListDirectory(Vec<DirectoryEntry>),
     GlobSearch(Vec<PathBuf>),
     GrepSearch(Vec<GrepMatch>),
@@ -50,6 +52,10 @@ pub fn builtin_tool_descriptors() -> &'static [ToolDescriptor] {
         ToolDescriptor {
             name: "read_many_files",
             description: "read text content from many files",
+        },
+        ToolDescriptor {
+            name: "write_file",
+            description: "write text content to a file",
         },
     ]
 }
@@ -82,6 +88,10 @@ impl ToolRegistry {
             ToolRequest::ReadManyFiles { path, max_files } => {
                 let content = read_many_files(&path, max_files)?;
                 Ok(ToolResponse::ReadManyFiles(content))
+            }
+            ToolRequest::WriteFile { path, content } => {
+                let result = write_file(&path, &content)?;
+                Ok(ToolResponse::WriteFile(result))
             }
             ToolRequest::ListDirectory { path } => {
                 let entries = list_directory(&path)?;
@@ -178,6 +188,28 @@ mod tests {
     }
 
     #[test]
+    fn write_file_request_works() {
+        let temp_dir = make_temp_dir("remini-core-tool-registry-write-file");
+        let file = temp_dir.join("nested").join("note.txt");
+
+        let registry = ToolRegistry;
+        let response = registry
+            .execute(ToolRequest::WriteFile {
+                path: file.clone(),
+                content: "saved".to_string(),
+            })
+            .expect("tool request should succeed");
+
+        let result = match response {
+            ToolResponse::WriteFile(result) => result,
+            _ => panic!("expected write-file response"),
+        };
+        assert_eq!(result.path, file);
+        assert_eq!(result.bytes_written, 5);
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
     fn grep_search_request_works() {
         let temp_dir = make_temp_dir("remini-core-tool-registry-grep");
         fs::write(temp_dir.join("a.txt"), "needle").expect("failed to write fixture");
@@ -219,6 +251,7 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(names.contains(&"read_file"));
         assert!(names.contains(&"read_many_files"));
+        assert!(names.contains(&"write_file"));
         assert!(names.contains(&"grep_search"));
     }
 

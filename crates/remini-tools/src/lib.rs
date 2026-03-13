@@ -45,6 +45,12 @@ pub struct FileContent {
     pub content: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WriteFileResult {
+    pub path: PathBuf,
+    pub bytes_written: usize,
+}
+
 pub fn read_file(path: &Path) -> Result<String, ToolError> {
     if !path.exists() {
         return Err(ToolError {
@@ -61,6 +67,27 @@ pub fn read_file(path: &Path) -> Result<String, ToolError> {
     }
 
     fs::read_to_string(path).map_err(|err| map_io_error(err, path))
+}
+
+pub fn write_file(path: &Path, content: &str) -> Result<WriteFileResult, ToolError> {
+    if path.exists() && !path.is_file() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotFile,
+            message: format!("Path is not a file: {}", path.display()),
+        });
+    }
+
+    if let Some(parent) = path.parent() {
+        if !parent.as_os_str().is_empty() {
+            fs::create_dir_all(parent).map_err(|err| map_io_error(err, parent))?;
+        }
+    }
+
+    fs::write(path, content).map_err(|err| map_io_error(err, path))?;
+    Ok(WriteFileResult {
+        path: path.to_path_buf(),
+        bytes_written: content.len(),
+    })
 }
 
 pub fn read_many_files(path: &Path, max_files: usize) -> Result<Vec<FileContent>, ToolError> {
@@ -348,6 +375,21 @@ mod tests {
 
         let result = read_file(&file_path).expect_err("read_file should fail");
         assert_eq!(result.kind, ToolErrorKind::NotFound);
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn write_file_creates_parent_directories() {
+        let temp_dir = make_temp_dir("remini-tools-write-file");
+        let file_path = temp_dir.join("nested").join("note.txt");
+
+        let result = write_file(&file_path, "hello write").expect("write_file should succeed");
+        assert_eq!(result.bytes_written, "hello write".len());
+        assert_eq!(
+            fs::read_to_string(&file_path).expect("file should exist"),
+            "hello write"
+        );
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }
