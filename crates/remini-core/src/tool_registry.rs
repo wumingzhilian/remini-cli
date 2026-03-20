@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use remini_tools::{
-    glob_search, grep_search, list_directory, read_file, read_many_files, write_file,
-    DirectoryEntry, FileContent, GrepMatch, ToolError, WriteFileResult,
+    glob_search, grep_search, list_directory, read_file, read_many_files, replace_in_file,
+    write_file, DirectoryEntry, FileContent, GrepMatch, ReplaceResult, ToolError, WriteFileResult,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,6 +16,12 @@ pub enum ToolRequest {
     ReadFile { path: PathBuf },
     ReadManyFiles { path: PathBuf, max_files: usize },
     WriteFile { path: PathBuf, content: String },
+    Replace {
+        path: PathBuf,
+        old_string: String,
+        new_string: String,
+        allow_multiple: bool,
+    },
     ListDirectory { path: PathBuf },
     GlobSearch { root: PathBuf, pattern: String },
     GrepSearch { root: PathBuf, query: String },
@@ -26,6 +32,7 @@ pub enum ToolResponse {
     ReadFile(String),
     ReadManyFiles(Vec<FileContent>),
     WriteFile(WriteFileResult),
+    Replace(ReplaceResult),
     ListDirectory(Vec<DirectoryEntry>),
     GlobSearch(Vec<PathBuf>),
     GrepSearch(Vec<GrepMatch>),
@@ -56,6 +63,10 @@ pub fn builtin_tool_descriptors() -> &'static [ToolDescriptor] {
         ToolDescriptor {
             name: "write_file",
             description: "write text content to a file",
+        },
+        ToolDescriptor {
+            name: "replace",
+            description: "replace exact text within a file",
         },
     ]
 }
@@ -92,6 +103,15 @@ impl ToolRegistry {
             ToolRequest::WriteFile { path, content } => {
                 let result = write_file(&path, &content)?;
                 Ok(ToolResponse::WriteFile(result))
+            }
+            ToolRequest::Replace {
+                path,
+                old_string,
+                new_string,
+                allow_multiple,
+            } => {
+                let result = replace_in_file(&path, &old_string, &new_string, allow_multiple)?;
+                Ok(ToolResponse::Replace(result))
             }
             ToolRequest::ListDirectory { path } => {
                 let entries = list_directory(&path)?;
@@ -210,6 +230,30 @@ mod tests {
     }
 
     #[test]
+    fn replace_request_works() {
+        let temp_dir = make_temp_dir("remini-core-tool-registry-replace");
+        let file = temp_dir.join("note.txt");
+        fs::write(&file, "before").expect("failed to write fixture");
+
+        let registry = ToolRegistry;
+        let response = registry
+            .execute(ToolRequest::Replace {
+                path: file,
+                old_string: "before".to_string(),
+                new_string: "after".to_string(),
+                allow_multiple: false,
+            })
+            .expect("tool request should succeed");
+
+        let result = match response {
+            ToolResponse::Replace(result) => result,
+            _ => panic!("expected replace response"),
+        };
+        assert_eq!(result.occurrences, 1);
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
     fn grep_search_request_works() {
         let temp_dir = make_temp_dir("remini-core-tool-registry-grep");
         fs::write(temp_dir.join("a.txt"), "needle").expect("failed to write fixture");
@@ -252,6 +296,7 @@ mod tests {
         assert!(names.contains(&"read_file"));
         assert!(names.contains(&"read_many_files"));
         assert!(names.contains(&"write_file"));
+        assert!(names.contains(&"replace"));
         assert!(names.contains(&"grep_search"));
     }
 

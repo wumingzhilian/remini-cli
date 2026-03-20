@@ -8,6 +8,7 @@ pub enum ToolErrorKind {
     NotFound,
     NotFile,
     NotDirectory,
+    InvalidInput,
     Io,
 }
 
@@ -51,6 +52,13 @@ pub struct WriteFileResult {
     pub bytes_written: usize,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReplaceResult {
+    pub path: PathBuf,
+    pub occurrences: usize,
+    pub bytes_written: usize,
+}
+
 pub fn read_file(path: &Path) -> Result<String, ToolError> {
     if !path.exists() {
         return Err(ToolError {
@@ -87,6 +95,48 @@ pub fn write_file(path: &Path, content: &str) -> Result<WriteFileResult, ToolErr
     Ok(WriteFileResult {
         path: path.to_path_buf(),
         bytes_written: content.len(),
+    })
+}
+
+pub fn replace_in_file(
+    path: &Path,
+    old_string: &str,
+    new_string: &str,
+    allow_multiple: bool,
+) -> Result<ReplaceResult, ToolError> {
+    if old_string.is_empty() {
+        return Err(ToolError {
+            kind: ToolErrorKind::InvalidInput,
+            message: "old_string must not be empty".to_string(),
+        });
+    }
+
+    let current = read_file(path)?;
+    let occurrences = current.matches(old_string).count();
+    if occurrences == 0 {
+        return Err(ToolError {
+            kind: ToolErrorKind::InvalidInput,
+            message: format!("old_string was not found in {}", path.display()),
+        });
+    }
+
+    if occurrences > 1 && !allow_multiple {
+        return Err(ToolError {
+            kind: ToolErrorKind::InvalidInput,
+            message: format!(
+                "old_string matched {occurrences} times in {}. Set allow_multiple to replace all matches.",
+                path.display()
+            ),
+        });
+    }
+
+    let updated = current.replace(old_string, new_string);
+    fs::write(path, &updated).map_err(|err| map_io_error(err, path))?;
+
+    Ok(ReplaceResult {
+        path: path.to_path_buf(),
+        occurrences,
+        bytes_written: updated.len(),
     })
 }
 
@@ -389,6 +439,53 @@ mod tests {
         assert_eq!(
             fs::read_to_string(&file_path).expect("file should exist"),
             "hello write"
+        );
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn replace_in_file_replaces_single_match() {
+        let temp_dir = make_temp_dir("remini-tools-replace-single");
+        let file_path = temp_dir.join("sample.txt");
+        fs::write(&file_path, "hello old world").expect("failed to write fixture");
+
+        let result = replace_in_file(&file_path, "old", "new", false)
+            .expect("replace_in_file should succeed");
+        assert_eq!(result.occurrences, 1);
+        assert_eq!(
+            fs::read_to_string(&file_path).expect("file should exist"),
+            "hello new world"
+        );
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn replace_in_file_rejects_multiple_matches_by_default() {
+        let temp_dir = make_temp_dir("remini-tools-replace-multiple");
+        let file_path = temp_dir.join("sample.txt");
+        fs::write(&file_path, "old old").expect("failed to write fixture");
+
+        let err = replace_in_file(&file_path, "old", "new", false)
+            .expect_err("replace_in_file should fail for multiple matches");
+        assert_eq!(err.kind, ToolErrorKind::InvalidInput);
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn replace_in_file_allows_multiple_matches_when_requested() {
+        let temp_dir = make_temp_dir("remini-tools-replace-allow-multiple");
+        let file_path = temp_dir.join("sample.txt");
+        fs::write(&file_path, "old old").expect("failed to write fixture");
+
+        let result = replace_in_file(&file_path, "old", "new", true)
+            .expect("replace_in_file should succeed");
+        assert_eq!(result.occurrences, 2);
+        assert_eq!(
+            fs::read_to_string(&file_path).expect("file should exist"),
+            "new new"
         );
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
