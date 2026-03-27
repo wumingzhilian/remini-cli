@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolErrorKind {
@@ -57,6 +58,14 @@ pub struct ReplaceResult {
     pub path: PathBuf,
     pub occurrences: usize,
     pub bytes_written: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShellCommandResult {
+    pub command: String,
+    pub status_code: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
 }
 
 pub fn read_file(path: &Path) -> Result<String, ToolError> {
@@ -138,6 +147,57 @@ pub fn replace_in_file(
         occurrences,
         bytes_written: updated.len(),
     })
+}
+
+pub fn run_shell_command(command: &str, cwd: &Path) -> Result<ShellCommandResult, ToolError> {
+    let command = command.trim();
+    if command.is_empty() {
+        return Err(ToolError {
+            kind: ToolErrorKind::InvalidInput,
+            message: "command must not be empty".to_string(),
+        });
+    }
+
+    if !cwd.exists() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotFound,
+            message: format!("Path does not exist: {}", cwd.display()),
+        });
+    }
+
+    if !cwd.is_dir() {
+        return Err(ToolError {
+            kind: ToolErrorKind::NotDirectory,
+            message: format!("Path is not a directory: {}", cwd.display()),
+        });
+    }
+
+    let mut process = shell_command(command);
+    let output = process
+        .current_dir(cwd)
+        .output()
+        .map_err(|err| map_io_error(err, cwd))?;
+
+    Ok(ShellCommandResult {
+        command: command.to_string(),
+        status_code: output.status.code(),
+        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+    })
+}
+
+#[cfg(windows)]
+fn shell_command(command: &str) -> Command {
+    let mut process = Command::new("cmd");
+    process.arg("/C").arg(command);
+    process
+}
+
+#[cfg(not(windows))]
+fn shell_command(command: &str) -> Command {
+    let mut process = Command::new("sh");
+    process.arg("-lc").arg(command);
+    process
 }
 
 pub fn read_many_files(path: &Path, max_files: usize) -> Result<Vec<FileContent>, ToolError> {
@@ -487,6 +547,30 @@ mod tests {
             fs::read_to_string(&file_path).expect("file should exist"),
             "new new"
         );
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn run_shell_command_captures_stdout_and_status() {
+        let temp_dir = make_temp_dir("remini-tools-shell-success");
+
+        let result = run_shell_command("printf shell-ok", &temp_dir)
+            .expect("run_shell_command should succeed");
+        assert_eq!(result.status_code, Some(0));
+        assert_eq!(result.stdout, "shell-ok");
+        assert_eq!(result.stderr, "");
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn run_shell_command_captures_non_zero_status() {
+        let temp_dir = make_temp_dir("remini-tools-shell-failure");
+
+        let result = run_shell_command("exit 7", &temp_dir)
+            .expect("run_shell_command should return command result");
+        assert_eq!(result.status_code, Some(7));
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }

@@ -1,4 +1,6 @@
-use std::process::Command;
+use std::path::Path;
+
+use remini_tools::run_shell_command;
 
 pub fn execute_bang_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -11,29 +13,23 @@ pub fn execute_bang_command(input: &str) -> Result<Option<String>, String> {
         return Ok(None);
     }
 
-    let output = Command::new("sh")
-        .arg("-lc")
-        .arg(command)
-        .output()
+    let output = run_shell_command(command, Path::new("."))
         .map_err(|err| format!("Failed to execute shell command: {err}"))?;
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    if output.status_code != Some(0) {
+        let stderr = output.stderr.trim().to_string();
         if stderr.is_empty() {
             return Err(format!(
                 "Shell command failed with status: {}",
                 output
-                    .status
-                    .code()
-                    .map(|code| code.to_string())
-                    .unwrap_or_else(|| "signal".to_string())
+                    .status_code
+                    .map_or_else(|| "signal".to_string(), |code| code.to_string())
             ));
         }
         return Err(stderr);
     }
 
-    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    Ok(Some(stdout))
+    Ok(Some(output.stdout))
 }
 
 #[cfg(test)]

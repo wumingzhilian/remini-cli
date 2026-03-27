@@ -2,7 +2,8 @@ use std::path::PathBuf;
 
 use remini_tools::{
     glob_search, grep_search, list_directory, read_file, read_many_files, replace_in_file,
-    write_file, DirectoryEntry, FileContent, GrepMatch, ReplaceResult, ToolError, WriteFileResult,
+    run_shell_command, write_file, DirectoryEntry, FileContent, GrepMatch, ReplaceResult,
+    ShellCommandResult, ToolError, WriteFileResult,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,18 +14,38 @@ pub struct ToolDescriptor {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolRequest {
-    ReadFile { path: PathBuf },
-    ReadManyFiles { path: PathBuf, max_files: usize },
-    WriteFile { path: PathBuf, content: String },
+    ReadFile {
+        path: PathBuf,
+    },
+    ReadManyFiles {
+        path: PathBuf,
+        max_files: usize,
+    },
+    WriteFile {
+        path: PathBuf,
+        content: String,
+    },
     Replace {
         path: PathBuf,
         old_string: String,
         new_string: String,
         allow_multiple: bool,
     },
-    ListDirectory { path: PathBuf },
-    GlobSearch { root: PathBuf, pattern: String },
-    GrepSearch { root: PathBuf, query: String },
+    RunShellCommand {
+        command: String,
+        cwd: PathBuf,
+    },
+    ListDirectory {
+        path: PathBuf,
+    },
+    GlobSearch {
+        root: PathBuf,
+        pattern: String,
+    },
+    GrepSearch {
+        root: PathBuf,
+        query: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,6 +54,7 @@ pub enum ToolResponse {
     ReadManyFiles(Vec<FileContent>),
     WriteFile(WriteFileResult),
     Replace(ReplaceResult),
+    RunShellCommand(ShellCommandResult),
     ListDirectory(Vec<DirectoryEntry>),
     GlobSearch(Vec<PathBuf>),
     GrepSearch(Vec<GrepMatch>),
@@ -67,6 +89,10 @@ pub fn builtin_tool_descriptors() -> &'static [ToolDescriptor] {
         ToolDescriptor {
             name: "replace",
             description: "replace exact text within a file",
+        },
+        ToolDescriptor {
+            name: "run_shell_command",
+            description: "run a shell command and capture output",
         },
     ]
 }
@@ -112,6 +138,10 @@ impl ToolRegistry {
             } => {
                 let result = replace_in_file(&path, &old_string, &new_string, allow_multiple)?;
                 Ok(ToolResponse::Replace(result))
+            }
+            ToolRequest::RunShellCommand { command, cwd } => {
+                let result = run_shell_command(&command, &cwd)?;
+                Ok(ToolResponse::RunShellCommand(result))
             }
             ToolRequest::ListDirectory { path } => {
                 let entries = list_directory(&path)?;
@@ -254,6 +284,27 @@ mod tests {
     }
 
     #[test]
+    fn run_shell_command_request_works() {
+        let temp_dir = make_temp_dir("remini-core-tool-registry-shell");
+
+        let registry = ToolRegistry;
+        let response = registry
+            .execute(ToolRequest::RunShellCommand {
+                command: "printf registry-shell".to_string(),
+                cwd: temp_dir.clone(),
+            })
+            .expect("tool request should succeed");
+
+        let result = match response {
+            ToolResponse::RunShellCommand(result) => result,
+            _ => panic!("expected shell response"),
+        };
+        assert_eq!(result.status_code, Some(0));
+        assert_eq!(result.stdout, "registry-shell");
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
     fn grep_search_request_works() {
         let temp_dir = make_temp_dir("remini-core-tool-registry-grep");
         fs::write(temp_dir.join("a.txt"), "needle").expect("failed to write fixture");
@@ -297,6 +348,7 @@ mod tests {
         assert!(names.contains(&"read_many_files"));
         assert!(names.contains(&"write_file"));
         assert!(names.contains(&"replace"));
+        assert!(names.contains(&"run_shell_command"));
         assert!(names.contains(&"grep_search"));
     }
 
