@@ -4,6 +4,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+const SKIPPED_DIRECTORY_NAMES: &[&str] = &[".git", "node_modules", "target"];
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolErrorKind {
     NotFound,
@@ -361,10 +363,19 @@ fn collect_files(root: &Path, out: &mut Vec<PathBuf>) -> Result<(), ToolError> {
         if metadata.is_file() {
             out.push(path);
         } else if metadata.is_dir() {
+            if should_skip_directory(&path) {
+                continue;
+            }
             collect_files(&path, out)?;
         }
     }
     Ok(())
+}
+
+fn should_skip_directory(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| SKIPPED_DIRECTORY_NAMES.contains(&name))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -663,6 +674,25 @@ mod tests {
         assert!(contents.iter().any(|item| item.content == "a"));
         assert!(contents.iter().any(|item| item.content == "b"));
         assert!(contents.iter().any(|item| item.content == "c"));
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn read_many_files_skips_generated_directories() {
+        let temp_dir = make_temp_dir("remini-tools-read-many-skip-generated");
+        fs::write(temp_dir.join("root.txt"), "root").expect("failed to write root file");
+        fs::create_dir_all(temp_dir.join("target")).expect("failed to create target dir");
+        fs::write(temp_dir.join("target").join("generated.txt"), "generated")
+            .expect("failed to write generated file");
+        fs::create_dir_all(temp_dir.join("node_modules")).expect("failed to create node_modules");
+        fs::write(temp_dir.join("node_modules").join("dep.txt"), "dep")
+            .expect("failed to write dep file");
+
+        let contents =
+            read_many_files(&temp_dir, 10).expect("read_many_files should succeed for directory");
+        assert_eq!(contents.len(), 1);
+        assert_eq!(contents[0].content, "root");
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }
