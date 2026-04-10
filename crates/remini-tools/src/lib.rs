@@ -5,6 +5,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const SKIPPED_DIRECTORY_NAMES: &[&str] = &[".git", "node_modules", "target"];
+pub const DEFAULT_CONTEXT_FILENAME: &str = "GEMINI.md";
+pub const MEMORY_SECTION_HEADER: &str = "## Gemini Added Memories";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolErrorKind {
@@ -68,6 +70,12 @@ pub struct ShellCommandResult {
     pub status_code: Option<i32>,
     pub stdout: String,
     pub stderr: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MemorySaveResult {
+    pub path: PathBuf,
+    pub fact: String,
 }
 
 pub fn read_file(path: &Path) -> Result<String, ToolError> {
@@ -186,6 +194,72 @@ pub fn run_shell_command(command: &str, cwd: &Path) -> Result<ShellCommandResult
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
         stderr: String::from_utf8_lossy(&output.stderr).to_string(),
     })
+}
+
+pub fn save_memory(global_gemini_dir: &Path, fact: &str) -> Result<MemorySaveResult, ToolError> {
+    let sanitized_fact = sanitize_memory_fact(fact);
+    if sanitized_fact.is_empty() {
+        return Err(ToolError {
+            kind: ToolErrorKind::InvalidInput,
+            message: "fact must not be empty".to_string(),
+        });
+    }
+
+    fs::create_dir_all(global_gemini_dir).map_err(|err| map_io_error(err, global_gemini_dir))?;
+    let memory_path = global_gemini_dir.join(DEFAULT_CONTEXT_FILENAME);
+    let current = match fs::read_to_string(&memory_path) {
+        Ok(content) => content,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => String::new(),
+        Err(err) => return Err(map_io_error(err, &memory_path)),
+    };
+    let updated = compute_memory_content(&current, &sanitized_fact);
+    fs::write(&memory_path, updated).map_err(|err| map_io_error(err, &memory_path))?;
+
+    Ok(MemorySaveResult {
+        path: memory_path,
+        fact: sanitized_fact,
+    })
+}
+
+fn sanitize_memory_fact(fact: &str) -> String {
+    let single_line = fact.replace(['\r', '\n'], " ");
+    single_line
+        .trim()
+        .trim_start_matches('-')
+        .trim()
+        .to_string()
+}
+
+fn compute_memory_content(current: &str, fact: &str) -> String {
+    let new_item = format!("- {fact}");
+    let Some(header_index) = current.find(MEMORY_SECTION_HEADER) else {
+        let separator = memory_separator(current);
+        return format!("{current}{separator}{MEMORY_SECTION_HEADER}\n{new_item}\n");
+    };
+
+    let section_start = header_index + MEMORY_SECTION_HEADER.len();
+    let section_tail = &current[section_start..];
+    let section_end = section_tail
+        .find("\n## ")
+        .map(|offset| section_start + offset)
+        .unwrap_or(current.len());
+
+    let before = current[..section_start].trim_end();
+    let section = current[section_start..section_end].trim_end();
+    let after = &current[section_end..];
+    format!("{before}\n{}\n{new_item}\n{after}", section.trim_start()).replace("\n\n\n", "\n\n")
+}
+
+fn memory_separator(current: &str) -> &'static str {
+    if current.is_empty() {
+        ""
+    } else if current.ends_with("\n\n") || current.ends_with("\r\n\r\n") {
+        ""
+    } else if current.ends_with('\n') || current.ends_with("\r\n") {
+        "\n"
+    } else {
+        "\n\n"
+    }
 }
 
 #[cfg(windows)]
@@ -582,6 +656,32 @@ mod tests {
         let result = run_shell_command("exit 7", &temp_dir)
             .expect("run_shell_command should return command result");
         assert_eq!(result.status_code, Some(7));
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn save_memory_creates_memory_section() {
+        let temp_dir = make_temp_dir("remini-tools-memory-create");
+
+        let result = save_memory(&temp_dir, "the sky is blue").expect("save_memory should succeed");
+        assert_eq!(result.fact, "the sky is blue");
+        let content = fs::read_to_string(result.path).expect("memory file should exist");
+        assert_eq!(content, "## Gemini Added Memories\n- the sky is blue\n");
+
+        fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn save_memory_appends_to_existing_section() {
+        let temp_dir = make_temp_dir("remini-tools-memory-append");
+        let memory_path = temp_dir.join(DEFAULT_CONTEXT_FILENAME);
+        fs::write(&memory_path, "Intro\n\n## Gemini Added Memories\n- first\n")
+            .expect("failed to write fixture");
+
+        save_memory(&temp_dir, "- second\nline").expect("save_memory should succeed");
+        let content = fs::read_to_string(memory_path).expect("memory file should exist");
+        assert!(content.contains("- first\n- second line\n"));
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
     }
