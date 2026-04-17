@@ -2,8 +2,9 @@ use std::path::PathBuf;
 
 use remini_tools::{
     glob_search, grep_search, list_directory, read_file, read_many_files, replace_in_file,
-    run_shell_command, save_memory, write_file, DirectoryEntry, FileContent, GrepMatch,
-    MemorySaveResult, ReplaceResult, ShellCommandResult, ToolError, WriteFileResult,
+    run_shell_command, save_memory, write_file, write_todos, DirectoryEntry, FileContent,
+    GrepMatch, MemorySaveResult, ReplaceResult, ShellCommandResult, TodoItem, TodoListResult,
+    ToolError, WriteFileResult,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,6 +40,9 @@ pub enum ToolRequest {
         global_gemini_dir: PathBuf,
         fact: String,
     },
+    WriteTodos {
+        todos: Vec<TodoItem>,
+    },
     ListDirectory {
         path: PathBuf,
     },
@@ -60,6 +64,7 @@ pub enum ToolResponse {
     Replace(ReplaceResult),
     RunShellCommand(ShellCommandResult),
     SaveMemory(MemorySaveResult),
+    WriteTodos(TodoListResult),
     ListDirectory(Vec<DirectoryEntry>),
     GlobSearch(Vec<PathBuf>),
     GrepSearch(Vec<GrepMatch>),
@@ -102,6 +107,10 @@ pub fn builtin_tool_descriptors() -> &'static [ToolDescriptor] {
         ToolDescriptor {
             name: "save_memory",
             description: "save a fact to the global GEMINI.md memory file",
+        },
+        ToolDescriptor {
+            name: "write_todos",
+            description: "replace the current todo list",
         },
     ]
 }
@@ -158,6 +167,10 @@ impl ToolRegistry {
             } => {
                 let result = save_memory(&global_gemini_dir, &fact)?;
                 Ok(ToolResponse::SaveMemory(result))
+            }
+            ToolRequest::WriteTodos { todos } => {
+                let result = write_todos(todos)?;
+                Ok(ToolResponse::WriteTodos(result))
             }
             ToolRequest::ListDirectory { path } => {
                 let entries = list_directory(&path)?;
@@ -342,6 +355,25 @@ mod tests {
     }
 
     #[test]
+    fn write_todos_request_works() {
+        let registry = ToolRegistry;
+        let response = registry
+            .execute(ToolRequest::WriteTodos {
+                todos: vec![TodoItem {
+                    description: "Check registry".to_string(),
+                    status: remini_tools::TodoStatus::InProgress,
+                }],
+            })
+            .expect("tool request should succeed");
+
+        let result = match response {
+            ToolResponse::WriteTodos(result) => result,
+            _ => panic!("expected todos response"),
+        };
+        assert!(result.summary.contains("[in_progress] Check registry"));
+    }
+
+    #[test]
     fn grep_search_request_works() {
         let temp_dir = make_temp_dir("remini-core-tool-registry-grep");
         fs::write(temp_dir.join("a.txt"), "needle").expect("failed to write fixture");
@@ -387,6 +419,7 @@ mod tests {
         assert!(names.contains(&"replace"));
         assert!(names.contains(&"run_shell_command"));
         assert!(names.contains(&"save_memory"));
+        assert!(names.contains(&"write_todos"));
         assert!(names.contains(&"grep_search"));
     }
 

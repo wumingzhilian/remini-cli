@@ -78,6 +78,37 @@ pub struct MemorySaveResult {
     pub fact: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TodoStatus {
+    Pending,
+    InProgress,
+    Completed,
+    Cancelled,
+}
+
+impl TodoStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::InProgress => "in_progress",
+            Self::Completed => "completed",
+            Self::Cancelled => "cancelled",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TodoItem {
+    pub description: String,
+    pub status: TodoStatus,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TodoListResult {
+    pub todos: Vec<TodoItem>,
+    pub summary: String,
+}
+
 pub fn read_file(path: &Path) -> Result<String, ToolError> {
     if !path.exists() {
         return Err(ToolError {
@@ -219,6 +250,49 @@ pub fn save_memory(global_gemini_dir: &Path, fact: &str) -> Result<MemorySaveRes
         path: memory_path,
         fact: sanitized_fact,
     })
+}
+
+pub fn write_todos(todos: Vec<TodoItem>) -> Result<TodoListResult, ToolError> {
+    for todo in &todos {
+        if todo.description.trim().is_empty() {
+            return Err(ToolError {
+                kind: ToolErrorKind::InvalidInput,
+                message: "Each todo must have a non-empty description".to_string(),
+            });
+        }
+    }
+
+    let in_progress_count = todos
+        .iter()
+        .filter(|todo| todo.status == TodoStatus::InProgress)
+        .count();
+    if in_progress_count > 1 {
+        return Err(ToolError {
+            kind: ToolErrorKind::InvalidInput,
+            message: "Only one todo can be in_progress at a time".to_string(),
+        });
+    }
+
+    let summary = if todos.is_empty() {
+        "Successfully cleared the todo list.".to_string()
+    } else {
+        let items = todos
+            .iter()
+            .enumerate()
+            .map(|(index, todo)| {
+                format!(
+                    "{}. [{}] {}",
+                    index + 1,
+                    todo.status.as_str(),
+                    todo.description
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        format!("Successfully updated the todo list. The current list is now:\n{items}")
+    };
+
+    Ok(TodoListResult { todos, summary })
 }
 
 fn sanitize_memory_fact(fact: &str) -> String {
@@ -684,6 +758,43 @@ mod tests {
         assert!(content.contains("- first\n- second line\n"));
 
         fs::remove_dir_all(temp_dir).expect("failed to clean up temp dir");
+    }
+
+    #[test]
+    fn write_todos_formats_valid_todo_list() {
+        let result = write_todos(vec![
+            TodoItem {
+                description: "Plan implementation".to_string(),
+                status: TodoStatus::Completed,
+            },
+            TodoItem {
+                description: "Write tests".to_string(),
+                status: TodoStatus::InProgress,
+            },
+        ])
+        .expect("write_todos should succeed");
+
+        assert!(result
+            .summary
+            .contains("1. [completed] Plan implementation"));
+        assert!(result.summary.contains("2. [in_progress] Write tests"));
+    }
+
+    #[test]
+    fn write_todos_rejects_multiple_in_progress_items() {
+        let err = write_todos(vec![
+            TodoItem {
+                description: "One".to_string(),
+                status: TodoStatus::InProgress,
+            },
+            TodoItem {
+                description: "Two".to_string(),
+                status: TodoStatus::InProgress,
+            },
+        ])
+        .expect_err("write_todos should reject multiple in_progress items");
+
+        assert_eq!(err.kind, ToolErrorKind::InvalidInput);
     }
 
     #[test]
