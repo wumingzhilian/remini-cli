@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::plan_mode::{enter_plan_mode, exit_plan_mode, PlanModeResult};
+
 use remini_tools::{
     glob_search, grep_search, list_directory, read_file, read_many_files, replace_in_file,
     run_shell_command, save_memory, write_file, write_todos, DirectoryEntry, FileContent,
@@ -43,6 +45,14 @@ pub enum ToolRequest {
     WriteTodos {
         todos: Vec<TodoItem>,
     },
+    EnterPlanMode {
+        reason: Option<String>,
+    },
+    ExitPlanMode {
+        plan_path: PathBuf,
+        plans_dir: PathBuf,
+        cwd: PathBuf,
+    },
     ListDirectory {
         path: PathBuf,
     },
@@ -65,6 +75,8 @@ pub enum ToolResponse {
     RunShellCommand(ShellCommandResult),
     SaveMemory(MemorySaveResult),
     WriteTodos(TodoListResult),
+    EnterPlanMode(PlanModeResult),
+    ExitPlanMode(PlanModeResult),
     ListDirectory(Vec<DirectoryEntry>),
     GlobSearch(Vec<PathBuf>),
     GrepSearch(Vec<GrepMatch>),
@@ -111,6 +123,14 @@ pub fn builtin_tool_descriptors() -> &'static [ToolDescriptor] {
         ToolDescriptor {
             name: "write_todos",
             description: "replace the current todo list",
+        },
+        ToolDescriptor {
+            name: "enter_plan_mode",
+            description: "switch the agent into read-only planning mode",
+        },
+        ToolDescriptor {
+            name: "exit_plan_mode",
+            description: "approve a plan file and leave planning mode",
         },
     ]
 }
@@ -171,6 +191,22 @@ impl ToolRegistry {
             ToolRequest::WriteTodos { todos } => {
                 let result = write_todos(todos)?;
                 Ok(ToolResponse::WriteTodos(result))
+            }
+            ToolRequest::EnterPlanMode { reason } => {
+                let result = enter_plan_mode(reason.as_deref());
+                Ok(ToolResponse::EnterPlanMode(result))
+            }
+            ToolRequest::ExitPlanMode {
+                plan_path,
+                plans_dir,
+                cwd,
+            } => {
+                let result =
+                    exit_plan_mode(&plan_path, &plans_dir, &cwd).map_err(|message| ToolError {
+                        kind: remini_tools::ToolErrorKind::InvalidInput,
+                        message,
+                    })?;
+                Ok(ToolResponse::ExitPlanMode(result))
             }
             ToolRequest::ListDirectory { path } => {
                 let entries = list_directory(&path)?;
@@ -374,6 +410,40 @@ mod tests {
     }
 
     #[test]
+    fn enter_plan_mode_request_works() {
+        let registry = ToolRegistry;
+        let response = registry
+            .execute(ToolRequest::EnterPlanMode {
+                reason: Some("inspect first".to_string()),
+            })
+            .expect("tool request should succeed");
+
+        let result = match response {
+            ToolResponse::EnterPlanMode(result) => result,
+            _ => panic!("expected enter plan mode response"),
+        };
+        assert!(result.message.contains("inspect first"));
+    }
+
+    #[test]
+    fn exit_plan_mode_request_works() {
+        let registry = ToolRegistry;
+        let response = registry
+            .execute(ToolRequest::ExitPlanMode {
+                plan_path: PathBuf::from(".gemini/plans/plan.md"),
+                plans_dir: PathBuf::from(".gemini/plans"),
+                cwd: PathBuf::from("/workspace"),
+            })
+            .expect("tool request should succeed");
+
+        let result = match response {
+            ToolResponse::ExitPlanMode(result) => result,
+            _ => panic!("expected exit plan mode response"),
+        };
+        assert!(result.message.contains("Plan approved"));
+    }
+
+    #[test]
     fn grep_search_request_works() {
         let temp_dir = make_temp_dir("remini-core-tool-registry-grep");
         fs::write(temp_dir.join("a.txt"), "needle").expect("failed to write fixture");
@@ -420,6 +490,8 @@ mod tests {
         assert!(names.contains(&"run_shell_command"));
         assert!(names.contains(&"save_memory"));
         assert!(names.contains(&"write_todos"));
+        assert!(names.contains(&"enter_plan_mode"));
+        assert!(names.contains(&"exit_plan_mode"));
         assert!(names.contains(&"grep_search"));
     }
 
