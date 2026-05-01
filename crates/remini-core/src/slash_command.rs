@@ -1,6 +1,46 @@
 use crate::tool_registry::format_tool_list;
 
-const COMMAND_HELP_TEXT: &str = "Available commands:\n/about\n/auth\n/bug\n/clear\n/commands\n/compress [note]\n/copy [message-id]\n/directory [list|add <path>|remove <path>]\n/docs\n/editor [status|open <path>]\n/help\n/ide [status|enable|disable]\n/init\n/model [set <name>]\n/permissions [status|set <mode>]\n/plan [status|enter|exit <path>]\n/privacy\n/quit\n/resume [session|latest]\n/settings [show|set <key> <value>]\n/stats [session|model|tools]\n/terminal-setup [check|install]\n/theme [list|set <name>]\n/tools [desc|nodesc]\n/vim [status|on|off]\n@<path>\n!<command>";
+const COMMAND_HELP_TEXT: &str = concat!(
+    "Available commands:\n",
+    "/about\n",
+    "/auth\n",
+    "/bug\n",
+    "/chat [list|save|resume <name>|delete <name>]\n",
+    "/clear\n",
+    "/commands\n",
+    "/compress [note]\n",
+    "/copy [message-id]\n",
+    "/directory [list|add <path>|remove <path>]\n",
+    "/docs\n",
+    "/editor [status|open <path>]\n",
+    "/extensions [list|enable <name>|disable <name>]\n",
+    "/help\n",
+    "/hooks [list|reload]\n",
+    "/ide [status|enable|disable]\n",
+    "/init\n",
+    "/mcp [list|add|remove]\n",
+    "/memory [show|add <fact>]\n",
+    "/model [set <name>]\n",
+    "/permissions [status|set <mode>]\n",
+    "/plan [status|enter|exit <path>]\n",
+    "/policies [status|reload]\n",
+    "/privacy\n",
+    "/quit\n",
+    "/restore [checkpoint]\n",
+    "/resume [session|latest]\n",
+    "/rewind [turn]\n",
+    "/settings [show|set <key> <value>]\n",
+    "/setup-github\n",
+    "/shells [list]\n",
+    "/skills [list|reload]\n",
+    "/stats [session|model|tools]\n",
+    "/terminal-setup [check|install]\n",
+    "/theme [list|set <name>]\n",
+    "/tools [desc|nodesc]\n",
+    "/vim [status|on|off]\n",
+    "@<path>\n",
+    "!<command>"
+);
 
 pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
     let trimmed = input.trim();
@@ -21,6 +61,33 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         "/bug" => Ok(Some(
             "Bug report (stub): please open an issue with steps to reproduce and logs.".to_string(),
         )),
+        "/chat" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some("Saved chats (stub): none.".to_string())),
+                "save" => {
+                    let name = parts.next().unwrap_or("latest");
+                    Ok(Some(format!("Saved current chat as {name} (stub).")))
+                }
+                "resume" => {
+                    if let Some(name) = parts.next() {
+                        Ok(Some(format!("Resumed chat {name} (stub).")))
+                    } else {
+                        Err("Usage: /chat resume <name>".to_string())
+                    }
+                }
+                "delete" => {
+                    if let Some(name) = parts.next() {
+                        Ok(Some(format!("Deleted chat {name} (stub).")))
+                    } else {
+                        Err("Usage: /chat delete <name>".to_string())
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /chat option: {other}. Use list, save, resume <name>, or delete <name>."
+                )),
+            }
+        }
         "/directory" => {
             let action = parts.next().unwrap_or("list");
             match action {
@@ -89,6 +156,32 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )),
             }
         }
+        "/extensions" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some("Extensions (stub): no extensions installed.".to_string())),
+                "enable" | "disable" => {
+                    if let Some(name) = parts.next() {
+                        Ok(Some(format!("Extension {name} {action} requested (stub).")))
+                    } else {
+                        Err(format!("Usage: /extensions {action} <name>"))
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /extensions option: {other}. Use list, enable <name>, or disable <name>."
+                )),
+            }
+        }
+        "/hooks" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some("Hooks (stub): no hooks configured.".to_string())),
+                "reload" => Ok(Some("Hooks reloaded (stub).".to_string())),
+                other => Err(format!(
+                    "Unsupported /hooks option: {other}. Use list or reload."
+                )),
+            }
+        }
         "/ide" => {
             let action = parts.next().unwrap_or("status");
             match action {
@@ -101,6 +194,34 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )),
                 other => Err(format!(
                     "Unsupported /ide option: {other}. Use status, enable, or disable."
+                )),
+            }
+        }
+        "/mcp" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some("MCP servers (stub): none configured.".to_string())),
+                "add" => Ok(Some("MCP add flow requested (stub).".to_string())),
+                "remove" => Ok(Some("MCP remove flow requested (stub).".to_string())),
+                other => Err(format!(
+                    "Unsupported /mcp option: {other}. Use list, add, or remove."
+                )),
+            }
+        }
+        "/memory" => {
+            let action = parts.next().unwrap_or("show");
+            match action {
+                "show" => Ok(Some("Memory (stub): no memory entries loaded.".to_string())),
+                "add" => {
+                    let fact = parts.collect::<Vec<_>>().join(" ");
+                    if fact.is_empty() {
+                        Err("Usage: /memory add <fact>".to_string())
+                    } else {
+                        Ok(Some(format!("Memory save requested (stub): {fact}")))
+                    }
+                }
+                other => Err(format!(
+                    "Unsupported /memory option: {other}. Use show or add <fact>."
                 )),
             }
         }
@@ -198,6 +319,18 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
                 )),
             }
         }
+        "/policies" => {
+            let action = parts.next().unwrap_or("status");
+            match action {
+                "status" => Ok(Some(
+                    "Policies (stub): default policy engine inactive.".to_string(),
+                )),
+                "reload" => Ok(Some("Policies reloaded (stub).".to_string())),
+                other => Err(format!(
+                    "Unsupported /policies option: {other}. Use status or reload."
+                )),
+            }
+        }
         "/init" => Ok(Some(
             "Init (stub): generated starter files guidance for remini-cli in current workspace."
                 .to_string(),
@@ -229,9 +362,37 @@ pub fn execute_slash_command(input: &str) -> Result<Option<String>, String> {
         }
         "/clear" => Ok(Some("Screen cleared (stub).".to_string())),
         "/quit" | "/exit" => Ok(Some("Session ended (stub).".to_string())),
+        "/restore" => {
+            let checkpoint = parts.next().unwrap_or("latest");
+            Ok(Some(format!("Restore requested for {checkpoint} (stub).")))
+        }
         "/resume" => {
             let session = parts.next().unwrap_or("latest");
             Ok(Some(format!("Resumed session: {session} (stub).")))
+        }
+        "/rewind" => {
+            let turn = parts.next().unwrap_or("last");
+            Ok(Some(format!("Rewind requested for {turn} (stub).")))
+        }
+        "/setup-github" => Ok(Some(
+            "GitHub setup (stub): workflow and command installation not yet active.".to_string(),
+        )),
+        "/shells" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some("Approved shell commands (stub): none.".to_string())),
+                other => Err(format!("Unsupported /shells option: {other}. Use list.")),
+            }
+        }
+        "/skills" => {
+            let action = parts.next().unwrap_or("list");
+            match action {
+                "list" => Ok(Some("Skills (stub): no skills loaded.".to_string())),
+                "reload" => Ok(Some("Skills reloaded (stub).".to_string())),
+                other => Err(format!(
+                    "Unsupported /skills option: {other}. Use list or reload."
+                )),
+            }
         }
         "/help" | "/?" => Ok(Some(COMMAND_HELP_TEXT.to_string())),
         "/commands" => Ok(Some(COMMAND_HELP_TEXT.to_string())),
@@ -312,15 +473,26 @@ mod tests {
         assert!(result.contains("Available commands"));
         assert!(result.contains("/model"));
         assert!(result.contains("/resume"));
+        assert!(result.contains("/chat"));
         assert!(result.contains("/directory"));
         assert!(result.contains("/compress"));
         assert!(result.contains("/docs"));
         assert!(result.contains("/editor"));
+        assert!(result.contains("/extensions"));
+        assert!(result.contains("/hooks"));
         assert!(result.contains("/ide"));
         assert!(result.contains("/init"));
+        assert!(result.contains("/mcp"));
+        assert!(result.contains("/memory"));
         assert!(result.contains("/privacy"));
         assert!(result.contains("/permissions"));
         assert!(result.contains("/plan"));
+        assert!(result.contains("/policies"));
+        assert!(result.contains("/restore"));
+        assert!(result.contains("/rewind"));
+        assert!(result.contains("/setup-github"));
+        assert!(result.contains("/shells"));
+        assert!(result.contains("/skills"));
         assert!(result.contains("/terminal-setup"));
         assert!(result.contains("/theme"));
         assert!(result.contains("/vim"));
@@ -414,6 +586,14 @@ mod tests {
             .expect("clear command should succeed")
             .expect("clear command should return content");
         assert!(result.contains("Screen cleared"));
+    }
+
+    #[test]
+    fn chat_command_defaults_to_list() {
+        let result = execute_slash_command("/chat")
+            .expect("chat command should succeed")
+            .expect("chat command should return content");
+        assert!(result.contains("Saved chats"));
     }
 
     #[test]
@@ -517,6 +697,22 @@ mod tests {
     }
 
     #[test]
+    fn extensions_command_defaults_to_list() {
+        let result = execute_slash_command("/extensions")
+            .expect("extensions command should succeed")
+            .expect("extensions command should return content");
+        assert!(result.contains("Extensions"));
+    }
+
+    #[test]
+    fn hooks_reload_is_supported() {
+        let result = execute_slash_command("/hooks reload")
+            .expect("hooks reload should succeed")
+            .expect("hooks reload should return content");
+        assert!(result.contains("Hooks reloaded"));
+    }
+
+    #[test]
     fn ide_command_defaults_to_status() {
         let result = execute_slash_command("/ide")
             .expect("ide command should succeed")
@@ -534,6 +730,24 @@ mod tests {
             .expect("ide disable should return content");
         assert!(enabled.contains("enabled"));
         assert!(disabled.contains("disabled"));
+    }
+
+    #[test]
+    fn mcp_command_defaults_to_list() {
+        let result = execute_slash_command("/mcp")
+            .expect("mcp command should succeed")
+            .expect("mcp command should return content");
+        assert!(result.contains("MCP servers"));
+    }
+
+    #[test]
+    fn memory_add_requires_fact() {
+        let result = execute_slash_command("/memory add");
+        assert!(result.is_err());
+        assert_eq!(
+            result.expect_err("should fail"),
+            "Usage: /memory add <fact>"
+        );
     }
 
     #[test]
@@ -645,6 +859,14 @@ mod tests {
     }
 
     #[test]
+    fn policies_reload_is_supported() {
+        let result = execute_slash_command("/policies reload")
+            .expect("policies reload should succeed")
+            .expect("policies reload should return content");
+        assert!(result.contains("Policies reloaded"));
+    }
+
+    #[test]
     fn init_command_returns_setup_hint() {
         let result = execute_slash_command("/init")
             .expect("init command should succeed")
@@ -658,6 +880,34 @@ mod tests {
             .expect("privacy command should succeed")
             .expect("privacy command should return content");
         assert!(result.contains("Privacy (stub)"));
+    }
+
+    #[test]
+    fn restore_and_rewind_return_stub_messages() {
+        let restore = execute_slash_command("/restore checkpoint-1")
+            .expect("restore should succeed")
+            .expect("restore should return content");
+        let rewind = execute_slash_command("/rewind 3")
+            .expect("rewind should succeed")
+            .expect("rewind should return content");
+        assert!(restore.contains("checkpoint-1"));
+        assert!(rewind.contains("3"));
+    }
+
+    #[test]
+    fn setup_github_shells_and_skills_are_supported() {
+        let setup = execute_slash_command("/setup-github")
+            .expect("setup-github should succeed")
+            .expect("setup-github should return content");
+        let shells = execute_slash_command("/shells")
+            .expect("shells should succeed")
+            .expect("shells should return content");
+        let skills = execute_slash_command("/skills reload")
+            .expect("skills reload should succeed")
+            .expect("skills reload should return content");
+        assert!(setup.contains("GitHub setup"));
+        assert!(shells.contains("Approved shell commands"));
+        assert!(skills.contains("Skills reloaded"));
     }
 
     #[test]
