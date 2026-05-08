@@ -187,7 +187,7 @@ fn return_with_error(message: &str, format: Option<&OutputFormat>, code: u8) -> 
 fn main() -> ExitCode {
     let args = CliArgs::parse();
     let output_format = args.output_format.map(OutputFormat::from);
-    let include_directories = normalize_include_directories(args.include_directories.clone());
+    let cli_include_directories = normalize_include_directories(args.include_directories.clone());
     let resume = normalize_resume(args.resume.clone());
     let debug_mode = is_debug_mode(args.debug);
 
@@ -250,14 +250,16 @@ fn main() -> ExitCode {
         &CliOverrides {
             approval_mode,
             sandbox_enabled: if args.sandbox { Some(true) } else { None },
+            model_name: args.model.clone(),
+            include_directories: cli_include_directories,
         },
     );
 
     let request = RunRequest {
         query: normalize_query(&args.query),
-        model: args.model,
+        model: effective_settings.model_name.clone(),
         resume,
-        include_directories,
+        include_directories: effective_settings.include_directories.clone(),
         prompt: args.prompt,
         prompt_interactive: args.prompt_interactive,
         output_format: output_format.clone(),
