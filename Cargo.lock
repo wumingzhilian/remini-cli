@@ -168,6 +168,8 @@ name = "remini-core"
 version = "0.1.0"
 dependencies = [
  "remini-tools",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
