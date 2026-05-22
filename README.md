@@ -19,19 +19,28 @@ Rust 重写版 `gemini-cli` 项目。
    - `--resume/-r`（支持 `--resume` 默认恢复 `latest`）
    - `--include-directories`（支持逗号分隔与多次传入，用于 `@path` 查找附加目录）
    - settings 最小加载（`~/.gemini/settings.json` 与 `<workspace>/.gemini/settings.json`，workspace 优先）
+   - settings 读取 `model.name` 与 `context.includeDirectories`，CLI model 覆盖 settings，CLI include directories 追加 settings
    - `--output-format`（`text/json/stream-json`）
-3. 只读工具最小实现：
+3. ToolRegistry 最小实现：
    - `read_file`
    - `read_many_files`
    - `list_directory`
    - `glob_search`
    - `grep_search`
+   - `write_file`
+   - `replace`
+   - `run_shell_command`
+   - `save_memory`
+   - `write_todos`
+   - `enter_plan_mode`
+   - `exit_plan_mode`
 4. 命令最小实现：
-   - Slash：`/about`、`/auth`、`/bug`、`/clear`、`/commands`、`/compress`、`/copy`、`/directory`、`/docs`、`/editor`、`/help`、`/ide`、`/init`、`/model`、`/model set <name>`、`/permissions`、`/privacy`、`/quit`、`/resume`、`/settings`、`/stats`、`/terminal-setup`、`/theme`、`/tools`、`/tools desc|nodesc`、`/vim`
+   - Slash：`/about`、`/auth`、`/bug`、`/chat`、`/clear`、`/commands`、`/compress`、`/copy`、`/directory`、`/docs`、`/editor`、`/extensions`、`/help`、`/hooks`、`/ide`、`/init`、`/mcp`、`/memory`、`/model`、`/model set <name>`、`/permissions`、`/plan`、`/policies`、`/privacy`、`/quit`、`/restore`、`/resume`、`/rewind`、`/settings`、`/setup-github`、`/shells`、`/skills`、`/stats`、`/terminal-setup`、`/theme`、`/tools`、`/tools desc|nodesc`、`/vim`
    - At：`@path`（文件/目录最小展开）
    - Bang：`!command`（最小 shell 执行）
 5. headless 错误结构与输入错误退出码（`42`）已接入。
-6. 测试已接入并持续通过（`cargo test`）。
+6. 会话 JSONL 存储基础件已加入，作为 `/resume` 与 `/chat` 后续真实实现的落点。
+7. 测试已接入并持续通过（`cargo test`）。
 
 ## 快速开始
 
@@ -70,6 +79,9 @@ cargo run -p remini-bin -- --include-directories docs,crates -p "@README.md summ
 
 # !command 示例
 cargo run -p remini-bin -- -p "!printf hello"
+
+# 查看最新 ToolRegistry 输出
+cargo run -p remini-bin -- -p "/tools desc"
 ```
 
 ### 3) 查看帮助
@@ -108,7 +120,7 @@ cargo run -p remini-bin -- --help
 
 ## 下一阶段
 
-1. 继续补全 Slash 命令与参数体系。
-2. 扩展 ToolRegistry 到更多内置工具与确认流。
-3. 逐步接入 settings 多层加载、policy engine、MCP、extensions、skills、hooks。
+1. 将现有 slash stub 接入真实状态与存储。
+2. 为写入类工具接入 diff、确认流与 policy engine。
+3. 继续补 MCP、extensions、skills、hooks 的发现、加载和执行闭环。
 4. 完成 headless 与交互模式行为对齐测试。

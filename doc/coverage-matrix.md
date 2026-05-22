@@ -1,8 +1,8 @@
 # Remini CLI 功能覆盖矩阵（Coverage Matrix v0.1）
 
 - 项目：`remini-cli`
-- 基线：`gemini-cli@0.30.0-nightly.20260210.a2174751d`
-- 更新日期：`2026-02-27`
+- 基线：`gemini-cli@origin/main ba04e99be (2026-05-22)`
+- 更新日期：`2026-05-22`
 - 目标：矩阵项 `100% = Done`
 
 状态定义：
@@ -40,7 +40,7 @@
 | CMD-002 | `/about` | `packages/cli/src/ui/commands/aboutCommand.ts` | P1 | In Progress |
 | CMD-003 | `/auth` | `packages/cli/src/ui/commands/authCommand.ts` | P1 | In Progress |
 | CMD-004 | `/bug` | `packages/cli/src/ui/commands/bugCommand.ts` | P1 | In Progress |
-| CMD-005 | `/chat` + 子命令 | `packages/cli/src/ui/commands/chatCommand.ts` | P0 | Not Started |
+| CMD-005 | `/chat` + 子命令 | `packages/cli/src/ui/commands/chatCommand.ts` | P0 | In Progress |
 | CMD-006 | `/clear` | `packages/cli/src/ui/commands/clearCommand.ts` | P1 | In Progress |
 | CMD-007 | `/commands` | `packages/cli/src/ui/commands/commandsCommand.ts` | P1 | In Progress |
 | CMD-008 | `/compress` | `packages/cli/src/ui/commands/compressCommand.ts` | P1 | In Progress |
@@ -48,26 +48,26 @@
 | CMD-010 | `/directory` | `packages/cli/src/ui/commands/directoryCommand.tsx` | P1 | In Progress |
 | CMD-011 | `/docs` | `packages/cli/src/ui/commands/docsCommand.ts` | P2 | In Progress |
 | CMD-012 | `/editor` | `packages/cli/src/ui/commands/editorCommand.ts` | P2 | In Progress |
-| CMD-013 | `/extensions` | `packages/cli/src/ui/commands/extensionsCommand.ts` | P0 | Not Started |
+| CMD-013 | `/extensions` | `packages/cli/src/ui/commands/extensionsCommand.ts` | P0 | In Progress |
 | CMD-014 | `/help` | `packages/cli/src/ui/commands/helpCommand.ts` | P0 | In Progress |
-| CMD-015 | `/hooks` | `packages/cli/src/ui/commands/hooksCommand.ts` | P1 | Not Started |
+| CMD-015 | `/hooks` | `packages/cli/src/ui/commands/hooksCommand.ts` | P1 | In Progress |
 | CMD-016 | `/ide` | `packages/cli/src/ui/commands/ideCommand.ts` | P1 | In Progress |
 | CMD-017 | `/init` | `packages/cli/src/ui/commands/initCommand.ts` | P1 | In Progress |
-| CMD-018 | `/mcp` | `packages/cli/src/ui/commands/mcpCommand.ts` | P0 | Not Started |
-| CMD-019 | `/memory` | `packages/cli/src/ui/commands/memoryCommand.ts` | P0 | Not Started |
+| CMD-018 | `/mcp` | `packages/cli/src/ui/commands/mcpCommand.ts` | P0 | In Progress |
+| CMD-019 | `/memory` | `packages/cli/src/ui/commands/memoryCommand.ts` | P0 | In Progress |
 | CMD-020 | `/model` | `packages/cli/src/ui/commands/modelCommand.ts` | P1 | In Progress |
 | CMD-021 | `/permissions` | `packages/cli/src/ui/commands/permissionsCommand.ts` | P1 | In Progress |
-| CMD-022 | `/plan` | `packages/cli/src/ui/commands/planCommand.ts` | P1 | Not Started |
-| CMD-023 | `/policies` | `packages/cli/src/ui/commands/policiesCommand.ts` | P1 | Not Started |
+| CMD-022 | `/plan` | `packages/cli/src/ui/commands/planCommand.ts` | P1 | In Progress |
+| CMD-023 | `/policies` | `packages/cli/src/ui/commands/policiesCommand.ts` | P1 | In Progress |
 | CMD-024 | `/privacy` | `packages/cli/src/ui/commands/privacyCommand.ts` | P2 | In Progress |
 | CMD-025 | `/quit` | `packages/cli/src/ui/commands/quitCommand.ts` | P0 | In Progress |
-| CMD-026 | `/restore` | `packages/cli/src/ui/commands/restoreCommand.ts` | P1 | Not Started |
-| CMD-027 | `/rewind` | `packages/cli/src/ui/commands/rewindCommand.tsx` | P1 | Not Started |
+| CMD-026 | `/restore` | `packages/cli/src/ui/commands/restoreCommand.ts` | P1 | In Progress |
+| CMD-027 | `/rewind` | `packages/cli/src/ui/commands/rewindCommand.tsx` | P1 | In Progress |
 | CMD-028 | `/resume` | `packages/cli/src/ui/commands/resumeCommand.ts` | P1 | In Progress |
 | CMD-029 | `/settings` | `packages/cli/src/ui/commands/settingsCommand.ts` | P1 | In Progress |
-| CMD-030 | `/shells` | `packages/cli/src/ui/commands/shellsCommand.ts` | P1 | Not Started |
-| CMD-031 | `/setup-github` | `packages/cli/src/ui/commands/setupGithubCommand.ts` | P2 | Not Started |
-| CMD-032 | `/skills` | `packages/cli/src/ui/commands/skillsCommand.ts` | P0 | Not Started |
+| CMD-030 | `/shells` | `packages/cli/src/ui/commands/shellsCommand.ts` | P1 | In Progress |
+| CMD-031 | `/setup-github` | `packages/cli/src/ui/commands/setupGithubCommand.ts` | P2 | In Progress |
+| CMD-032 | `/skills` | `packages/cli/src/ui/commands/skillsCommand.ts` | P0 | In Progress |
 | CMD-033 | `/stats` | `packages/cli/src/ui/commands/statsCommand.ts` | P1 | In Progress |
 | CMD-034 | `/terminal-setup` | `packages/cli/src/ui/commands/terminalSetupCommand.ts` | P2 | In Progress |
 | CMD-035 | `/theme` | `packages/cli/src/ui/commands/themeCommand.ts` | P2 | In Progress |
@@ -90,18 +90,18 @@
 | TOOL-003 | `list_directory` | `packages/core/src/tools/ls.ts` | P0 | In Progress |
 | TOOL-004 | `read_file` | `packages/core/src/tools/read-file.ts` | P0 | In Progress |
 | TOOL-005 | `read_many_files` | `packages/core/src/tools/read-many-files.ts` | P0 | In Progress |
-| TOOL-006 | `write_file` | `packages/core/src/tools/write-file.ts` | P0 | Not Started |
-| TOOL-007 | `replace` | `packages/core/src/tools/edit.ts` | P0 | Not Started |
-| TOOL-008 | `run_shell_command` | `packages/core/src/tools/shell.ts` | P0 | Not Started |
+| TOOL-006 | `write_file` | `packages/core/src/tools/write-file.ts` | P0 | In Progress |
+| TOOL-007 | `replace` | `packages/core/src/tools/edit.ts` | P0 | In Progress |
+| TOOL-008 | `run_shell_command` | `packages/core/src/tools/shell.ts` | P0 | In Progress |
 | TOOL-009 | `google_web_search` | `packages/core/src/tools/web-search.ts` | P1 | Not Started |
 | TOOL-010 | `web_fetch` | `packages/core/src/tools/web-fetch.ts` | P1 | Not Started |
-| TOOL-011 | `write_todos` | `packages/core/src/tools/write-todos.ts` | P1 | Not Started |
-| TOOL-012 | `save_memory` | `packages/core/src/tools/memoryTool.ts` | P0 | Not Started |
+| TOOL-011 | `write_todos` | `packages/core/src/tools/write-todos.ts` | P1 | In Progress |
+| TOOL-012 | `save_memory` | `packages/core/src/tools/memoryTool.ts` | P0 | In Progress |
 | TOOL-013 | `get_internal_docs` | `packages/core/src/tools/get-internal-docs.ts` | P1 | Not Started |
 | TOOL-014 | `activate_skill` | `packages/core/src/tools/activate-skill.ts` | P0 | Not Started |
 | TOOL-015 | `ask_user` | `packages/core/src/tools/ask-user.ts` | P0 | Not Started |
-| TOOL-016 | `enter_plan_mode` | `packages/core/src/tools/enter-plan-mode.ts` | P1 | Not Started |
-| TOOL-017 | `exit_plan_mode` | `packages/core/src/tools/exit-plan-mode.ts` | P1 | Not Started |
+| TOOL-016 | `enter_plan_mode` | `packages/core/src/tools/enter-plan-mode.ts` | P1 | In Progress |
+| TOOL-017 | `exit_plan_mode` | `packages/core/src/tools/exit-plan-mode.ts` | P1 | In Progress |
 | TOOL-018 | ToolRegistry（内置+发现+MCP） | `packages/core/src/tools/tool-registry.ts` | P0 | In Progress |
 | TOOL-019 | Tool 确认流（allow/deny/ask） | `tools/*` + `policy/*` | P0 | Not Started |
 | TOOL-020 | Tool 输出格式（text/json） | `output/*` | P1 | Not Started |
@@ -112,7 +112,7 @@
 | --- | --- | --- | --- | --- |
 | CFG-001 | settings 多层加载顺序 | `docs/reference/configuration.md` | P0 | In Progress |
 | CFG-002 | schema 默认值与校验 | `schemas/settings.schema.json` | P0 | Not Started |
-| CFG-003 | env 变量展开 | `packages/cli/src/config/settings.ts` | P1 | Not Started |
+| CFG-003 | env 变量展开 | `packages/cli/src/config/settings.ts` | P1 | In Progress |
 | CFG-004 | trusted folders | `packages/cli/src/config/trustedFolders.ts` | P0 | Not Started |
 | CFG-005 | approval mode（default/auto_edit/plan/yolo） | `packages/cli/src/config/config.ts` | P0 | In Progress |
 | CFG-006 | policy paths 加载 | `docs/reference/policy-engine.md` | P1 | Not Started |
@@ -146,9 +146,9 @@
 
 | ID | 能力 | 基线参考 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- |
-| SES-001 | 会话自动保存 | `packages/core/src/services/chatRecordingService.ts` | P1 | Not Started |
-| SES-002 | 会话恢复 `resume` | `ui/commands/resumeCommand.ts` | P1 | Not Started |
-| SES-003 | `/chat save/list/resume/delete` | `ui/commands/chatCommand.ts` | P1 | Not Started |
+| SES-001 | 会话自动保存 | `packages/core/src/services/chatRecordingService.ts` | P1 | In Progress |
+| SES-002 | 会话恢复 `resume` | `ui/commands/resumeCommand.ts` | P1 | In Progress |
+| SES-003 | `/chat save/list/resume/delete` | `ui/commands/chatCommand.ts` | P1 | In Progress |
 | SES-004 | checkpointing | `docs/cli/checkpointing.md` | P1 | Not Started |
 | SES-005 | `/restore` 回滚 | `ui/commands/restoreCommand.ts` | P1 | Not Started |
 | SES-006 | `/rewind` 时间线回退 | `ui/commands/rewindCommand.tsx` | P1 | Not Started |
